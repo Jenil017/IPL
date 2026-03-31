@@ -34,6 +34,14 @@ async function loadHistory() {
         const res = await fetchWithAuth('/predictions');
         if (res.ok) {
             currentMatches = await res.json();
+            
+            // Sort by match_id correctly tracking numeric value ("match_2" vs "match_10")
+            currentMatches.sort((a, b) => {
+                const numA = parseInt(a.match_id.replace(/\D/g, '')) || 0;
+                const numB = parseInt(b.match_id.replace(/\D/g, '')) || 0;
+                return numA - numB;
+            });
+            
             renderTable();
         }
     } catch (e) { console.error(e); }
