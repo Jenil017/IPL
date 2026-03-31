@@ -36,6 +36,7 @@ static/uploads/*
 .env
 .env.local
 .env.*
+!.env.example
 
 # Logs
 *.log

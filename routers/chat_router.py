@@ -62,9 +62,13 @@ async def upload_chat_image(
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time chat."""
+    await manager.connect(websocket)
+    
     token = websocket.query_params.get("token")
     if not token:
+        logging.warning("WebSocket connection failed: No token provided")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        manager.disconnect(websocket)
         return
 
     # Validate JWT
@@ -72,21 +76,32 @@ async def websocket_endpoint(websocket: WebSocket):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if not username:
+            logging.warning("WebSocket connection failed: JWT missing sub")
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            manager.disconnect(websocket)
             return
-    except JWTError:
+    except JWTError as e:
+        logging.warning(f"WebSocket connection failed: JWT Error: {e}")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        manager.disconnect(websocket)
         return
 
     # Verify user exists using a short-lived session
-    with Session(engine) as session:
-        user = session.exec(select(User).where(User.username == username)).first()
-        if not user:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            return
-        user_username = user.username  # grab the value before session closes
+    try:
+        with Session(engine) as session:
+            user = session.exec(select(User).where(User.username == username)).first()
+            if not user:
+                logging.warning(f"WebSocket connection failed: User {username} not found")
+                await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+                manager.disconnect(websocket)
+                return
+            user_username = user.username  # grab the value before session closes
+    except Exception as e:
+        logging.error(f"WebSocket connection failed: DB Error {e}")
+        await websocket.close(code=status.WS_1011_INTERNAL_ERROR)
+        manager.disconnect(websocket)
+        return
 
-    await manager.connect(websocket)
     try:
         while True:
             data = await websocket.receive_json()

@@ -4,7 +4,7 @@ import os
 import logging
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import time
 
@@ -92,6 +92,11 @@ app.include_router(upload_router.router)
 app.include_router(result_router.router)
 app.include_router(admin_router.router)
 app.include_router(chat_router.router)
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("static/favicon.png", media_type="image/png")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
