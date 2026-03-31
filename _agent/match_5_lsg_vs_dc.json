@@ -1,0 +1,223 @@
+{
+  "_schema": {
+    "version": "1.0.0",
+    "name": "IPL Match Prediction — Universal Schema",
+    "description": "Fixed rigid schema for all IPL matches. Same structure every match. Fill null for unknowns (pre-toss). Based on the 4-Dimension 60-Parameter framework.",
+    "dimensions": {
+      "D1": "Team Strength & Composition  — max 25 pts",
+      "D2": "Venue & Environmental Factors — max 20 pts",
+      "D3": "Player Form & Head-to-Head   — max 30 pts",
+      "D4": "Recent Form & Momentum       — max 15 pts",
+      "TOTAL": "max 90 pts"
+    }
+  },
+
+  "match_info": {
+    "match_id":       "match_5",
+    "season":         2026,
+    "match_number":   5,
+    "stage":          "league",
+    "team_a":         "Lucknow Super Giants",
+    "team_b":         "Delhi Capitals",
+    "team_a_short":   "LSG",
+    "team_b_short":   "DC",
+    "venue_name":     "BRSABV Ekana Cricket Stadium",
+    "venue_city":     "Lucknow",
+    "date":           "2026-04-01",
+    "start_time_ist": "19:30",
+    "day_or_daynight":"day-night",
+    "neutral_venue":  false
+  },
+
+  "toss": {
+    "winner":   null,
+    "decision": null,
+    "note":     "Pre-toss."
+  },
+
+  "playing_xi": {
+    "team_a": {
+      "confirmed": false,
+      "players": [
+        { "name": "KL Rahul", "batting_position": 1, "role": "batter", "overseas": false, "captain": true, "wicketkeeper": true }
+      ],
+      "overseas_count": 4,
+      "impact_player_options": [],
+      "missing_key_players": []
+    },
+    "team_b": {
+      "confirmed": false,
+      "players": [
+        { "name": "Rishabh Pant", "batting_position": 4, "role": "batter", "overseas": false, "captain": true, "wicketkeeper": true }
+      ],
+      "overseas_count": 4,
+      "impact_player_options": [],
+      "missing_key_players": []
+    }
+  },
+
+  "recent_form": {
+    "team_a": {
+      "last_5_results": ["W", "L", "W", "W", "L"],
+      "last_5_results_detail": [],
+      "wins_in_last_5": 3,
+      "current_season_record": { "played": 0, "won": 0, "lost": 0 },
+      "win_streak_current": 0,
+      "lose_streak_current": 0,
+      "season_2025_finish": "league",
+      "motivation_note": ""
+    },
+    "team_b": {
+      "last_5_results": ["L", "W", "L", "L", "W"],
+      "last_5_results_detail": [],
+      "wins_in_last_5": 2,
+      "current_season_record": { "played": 0, "won": 0, "lost": 0 },
+      "win_streak_current": 0,
+      "lose_streak_current": 0,
+      "season_2025_finish": "league",
+      "motivation_note": ""
+    }
+  },
+
+  "head_to_head": {
+    "total_ipl_matches": 3,
+    "team_a_wins": 3,
+    "team_b_wins": 0,
+    "no_result": 0,
+    "tied": 0,
+    "team_a_win_pct": 100.0,
+    "team_b_win_pct": 0.0,
+    "at_this_venue": {
+      "total": 1,
+      "team_a_wins": 1,
+      "team_b_wins": 0,
+      "detail": []
+    },
+    "last_3_meetings": [],
+    "key_player_matchups": []
+  },
+
+  "key_batters": {
+    "team_a": [],
+    "team_b": []
+  },
+
+  "key_bowlers": {
+    "team_a": [],
+    "team_b": []
+  },
+
+  "venue_statistics": {
+    "venue_name": "BRSABV Ekana Cricket Stadium",
+    "ipl_matches_total": 7,
+    "batting_first_wins": 4,
+    "batting_second_wins": 2,
+    "batting_first_win_pct": 57.1,
+    "batting_second_win_pct": 42.9,
+    "avg_first_innings_score": 152,
+    "highest_score_at_venue": 193,
+    "highest_score_by": "LSG vs DC",
+    "lowest_score_at_venue": 108,
+    "lowest_score_by": "RCB vs LSG",
+    "highest_chase_successful": 159,
+    "lowest_total_defended": 126,
+    "pitch_type": "spin_friendly",
+    "pace_wicket_pct": 48.0,
+    "spin_wicket_pct": 52.0,
+    "boundary_dimensions": {
+      "square_off": 68,
+      "square_leg": 70,
+      "straight": 75,
+      "unit": "meters"
+    },
+    "dew_factor": "low",
+    "dew_note": "",
+    "toss_note": "",
+    "batting_first_score_rule": "",
+    "key_bowler_records": {
+      "most_wickets": "",
+      "best_figures": ""
+    }
+  },
+
+  "weather": {
+    "date": "2026-04-01",
+    "match_time_ist": "19:30",
+    "source": "AccuWeather",
+    "conditions": "mainly_clear",
+    "temperature_c": 30,
+    "feels_like_c": 32,
+    "humidity_pct": 25,
+    "cloud_cover_pct": 5,
+    "wind_speed_kmh": 10,
+    "wind_direction": "west",
+    "rain_probability_pct": 0,
+    "thunderstorm_probability_pct": 0,
+    "dew_expected": "unlikely",
+    "dew_reason": "",
+    "conditions_favor": ""
+  },
+
+  "dimension_scoring": {
+    "note": "",
+    "D1_team_strength": {
+      "max_points": 25,
+      "team_a": { "total": 15 },
+      "team_b": { "total": 13 }
+    },
+    "D2_venue_environment": {
+      "max_points": 20,
+      "team_a": { "total": 12 },
+      "team_b": { "total": 8 }
+    },
+    "D3_player_form_h2h": {
+      "max_points": 30,
+      "team_a": { "total": 17 },
+      "team_b": { "total": 15 }
+    },
+    "D4_momentum": {
+      "max_points": 15,
+      "team_a": { "total": 9 },
+      "team_b": { "total": 11 }
+    },
+    "final_scores": {
+      "team_a_total": 53,
+      "team_b_total": 47,
+      "total_possible": 90,
+      "score_difference": 6,
+      "confidence_band": "MEDIUM",
+      "win_probability": {
+        "team_a_pct": 53,
+        "team_b_pct": 47
+      },
+      "predicted_winner": "Lucknow Super Giants",
+      "confidence_pct": 53,
+      "confidence_level": "medium",
+      "expected_margin": ""
+    }
+  },
+
+  "prediction_report": {
+    "winner": "Lucknow Super Giants",
+    "winner_short": "LSG",
+    "confidence_pct": 53,
+    "confidence_level": "medium",
+    "expected_team_a_score_range": [155, 170],
+    "expected_team_b_score_range": [140, 160],
+    "key_match_winner_player": {
+      "name": "KL Rahul",
+      "reason": ""
+    },
+    "three_reasons_team_a_wins": [
+      { "rank": 1, "reason": "Home advantage on a slow Ekana ground", "data": "" },
+      { "rank": 2, "reason": "Superior spin bowling options suitable for the venue", "data": "" },
+      { "rank": 3, "reason": "Unbeaten record against DC (3-0)", "data": "" }
+    ],
+    "team_b_path_to_victory": [
+      "Pant plays a game-changing knock."
+    ],
+    "team_b_upset_probability_if_all_3_happen": 60,
+    "key_risks": [],
+    "data_limitations": []
+  }
+}
