@@ -30,6 +30,77 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusDiv.className = "text-danger";
         }
     });
+
+    const comingSoonForm = document.getElementById('coming-soon-form');
+    if (comingSoonForm) {
+        comingSoonForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const t1 = document.getElementById('cs-t1');
+            const t2 = document.getElementById('cs-t2');
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerText = "Initializing...";
+            btn.disabled = true;
+
+            const matchId = `cs_${Date.now()}`;
+            
+            // Mock a valid schema to trick the backend into accepting it easily purely from JS frontend
+            const dummyPayload = {
+                "match_info": {
+                    "match_id": matchId,
+                    "season": 2026,
+                    "match_number": "TBA",
+                    "stage": "league",
+                    "team_a": t1.options[t1.selectedIndex].text.split(' (')[0],
+                    "team_b": t2.options[t2.selectedIndex].text.split(' (')[0],
+                    "team_a_short": t1.value,
+                    "team_b_short": t2.value,
+                    "venue_name": "TBD",
+                    "venue_city": "TBD",
+                    "date": "Coming Soon",
+                    "start_time_ist": "TBA"
+                },
+                "prediction_report": {
+                    "is_coming_soon": true,
+                    "winner": "TBD",
+                    "winner_short": "TBD",
+                    "confidence_pct": 0,
+                    "confidence_level": "none"
+                },
+                "dimension_scoring": {
+                    "final_scores": {}
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(dummyPayload)], { type: "application/json" });
+            const formData = new FormData();
+            formData.append("file", blob, `${matchId}.json`);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: formData
+                });
+
+                if (res.ok) {
+                    alert("Premium luxury 'Coming Soon' screen successfully staged! It will show up on Dashboard.");
+                    e.target.reset();
+                    await loadMatches();
+                } else {
+                    const text = await res.text();
+                    alert(`Error initializing scan: ${text}`);
+                }
+            } catch (err) {
+                alert(`Network Error: ${err.message}`);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        });
+    }
 });
 
 async function loadUsers() {

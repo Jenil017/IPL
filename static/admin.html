@@ -61,10 +61,57 @@
     </div>
 
     <div class="container">
+        <!-- Coming Soon Match Setup -->
+        <div class="card" style="margin-bottom: 2rem; border-color: var(--pbks);">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">🚀 Initialize Scan: Coming Soon</h3>
+                    <p class="text-muted font-sm mb-1">Set a "Coming Soon" prediction. This replaces the dashboard with a premium loading UI until the real prediction json is uploaded.</p>
+                </div>
+                <div class="badge bg-pbks" style="font-size: 1rem;">PREMIUM FEATURE</div>
+            </div>
+            
+            <form id="coming-soon-form" style="display: flex; gap: 1rem; align-items: end; margin-top: 1rem; flex-wrap: wrap;">
+                <div class="form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
+                    <label>Team 1 (Home)</label>
+                    <select id="cs-t1" class="form-control" required>
+                        <option value="PBKS">Punjab Kings (PBKS)</option>
+                        <option value="GT">Gujarat Titans (GT)</option>
+                        <option value="CSK">Chennai Super Kings (CSK)</option>
+                        <option value="RCB">Royal Challengers Bengaluru (RCB)</option>
+                        <option value="MI">Mumbai Indians (MI)</option>
+                        <option value="LSG">Lucknow Super Giants (LSG)</option>
+                        <option value="DC">Delhi Capitals (DC)</option>
+                        <option value="RR">Rajasthan Royals (RR)</option>
+                        <option value="KKR">Kolkata Knight Riders (KKR)</option>
+                        <option value="SRH">Sunrisers Hyderabad (SRH)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
+                    <label>Team 2 (Away)</label>
+                    <select id="cs-t2" class="form-control" required>
+                        <option value="GT">Gujarat Titans (GT)</option>
+                        <option value="PBKS">Punjab Kings (PBKS)</option>
+                        <option value="CSK">Chennai Super Kings (CSK)</option>
+                        <option value="RCB">Royal Challengers Bengaluru (RCB)</option>
+                        <option value="MI">Mumbai Indians (MI)</option>
+                        <option value="LSG">Lucknow Super Giants (LSG)</option>
+                        <option value="DC">Delhi Capitals (DC)</option>
+                        <option value="RR">Rajasthan Royals (RR)</option>
+                        <option value="KKR">Kolkata Knight Riders (KKR)</option>
+                        <option value="SRH">Sunrisers Hyderabad (SRH)</option>
+                    </select>
+                </div>
+                <div style="flex: 0 0 auto;">
+                    <button type="submit" class="btn-primary" style="padding: 0.85rem 2rem;">Mark Coming Soon</button>
+                </div>
+            </form>
+        </div>
+
         <!-- Match Management -->
         <div class="card">
             <h3 style="margin-bottom: 1rem; font-size: 1rem;">Match Management (Dashboard Control)</h3>
-            <p class="text-muted font-sm mb-1">Set which match is currently shown on the global dashboard. By default, the latest upload is shown.</p>
+            <p class="text-muted font-sm mb-1">Set which match is currently shown on the global dashboard. By default, the latest upload is shown. "Coming Soon" matches appear here too.</p>
             <div class="table-scroll">
                 <table id="matches-table">
                     <thead>

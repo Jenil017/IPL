@@ -26,6 +26,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             throw new Error("Failed to parse JSON response from server.");
         }
 
+        if (data.prediction_report && data.prediction_report.is_coming_soon) {
+            document.getElementById('cs-team-a').innerText = data.match_info.team_a;
+            document.getElementById('cs-team-b').innerText = data.match_info.team_b;
+            document.getElementById('cs-meta').innerHTML = `Match ${data.match_info.match_number} · IPL ${data.match_info.season} <br> ${data.match_info.date || ''} · ${data.match_info.start_time_ist || 'Time TBA'}`;
+            
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('coming-soon-ui').classList.remove('hidden');
+            return;
+        }
+
         try {
             renderDashboard(data);
         } catch (renderErr) {
