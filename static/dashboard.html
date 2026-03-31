@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#0A0A0F">
+    <title>Dashboard - CricPredict</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="brand">🏏 CricPredict</div>
+        <div class="nav-links">
+            <a href="/static/dashboard.html" class="active">Dashboard</a>
+            <a href="/static/history.html">History</a>
+            <a href="/static/chat.html">Chat</a>
+            <a href="/static/upload.html" class="admin-only hidden">Upload</a>
+            <a href="/static/admin.html" class="admin-only hidden">Admin</a>
+        </div>
+        <div class="user-controls">
+            <button id="btn-logout" class="btn-logout">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container" id="content">
+        <div id="loading" class="loading-text" style="text-align: center; margin-top: 4rem; color: var(--text-muted);">Loading prediction...</div>
+        <div id="no-data" class="hidden" style="text-align: center; margin-top: 4rem; color: var(--text-muted);">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+            No predictions found.
+            <a href="/static/upload.html" class="admin-only hidden" style="color: var(--gt); display: block; margin-top: 0.5rem;">Upload one →</a>
+        </div>
+        
+        <div id="dashboard-ui" class="hidden">
+            <!-- Toss warning banner -->
+            <div id="toss-banner" class="card hidden toss-banner text-warning">
+                ⚠ Toss not yet decided — prediction may shift ±8% post-toss
+            </div>
+
+            <!-- Hero -->
+            <div class="card match-hero" style="margin-bottom: 1rem;">
+                <div class="hero-team">
+                    <h2 class="text-pbks" id="team-a" style="font-size: 1.6rem; margin-bottom: 0; font-weight: 800;">Team A</h2>
+                    <div id="team-a-badge" class="text-muted mt-1 font-sm"></div>
+                </div>
+                <div class="hero-center">
+                    <div class="text-muted font-bold font-sm" id="match-meta">Match 4 · IPL 2026</div>
+                    <div class="text-muted font-sm" id="match-venue">Venue</div>
+                </div>
+                <div class="hero-team">
+                    <h2 class="text-gt" id="team-b" style="font-size: 1.6rem; margin-bottom: 0; font-weight: 800;">Team B</h2>
+                    <div id="team-b-badge" class="text-muted mt-1 font-sm"></div>
+                </div>
+            </div>
+
+            <!-- Prediction Winner -->
+            <div class="card" style="text-align: center;">
+                <div class="text-success" style="letter-spacing: 2px; font-weight: 700; font-size: 0.75rem;">✦ PREDICTED WINNER ✦</div>
+                <div class="pred-winner" id="pred-winner-name">Winner Name</div>
+                <div class="text-muted font-sm" id="pred-confidence">Confidence: 64% · Medium</div>
+                
+                <div class="prob-bar-container">
+                    <div class="prob-bar-a" id="bar-a" style="width: 50%;"></div>
+                    <div class="prob-bar-b" id="bar-b" style="width: 50%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.75rem;">
+                    <span id="label-a-pct" class="text-pbks font-bold">50%</span>
+                    <span id="label-b-pct" class="text-gt font-bold">50%</span>
+                </div>
+                <div class="text-muted font-sm" id="pred-expected">Expected score: XXX - YYY</div>
+            </div>
+
+            <!-- 60-Param Scorecard -->
+            <div class="card">
+                <h3 style="font-size: 1rem; margin-bottom: 1rem;">60-Parameter Scorecard</h3>
+                <div class="table-scroll">
+                    <div class="sc-row" style="border-top: 1px solid var(--border); font-weight: 700;">
+                        <div>Dimension</div>
+                        <div id="sc-team-a-lbl">A</div>
+                        <div id="sc-team-b-lbl">B</div>
+                        <div>Edge</div>
+                    </div>
+                    <div id="scorecard-rows"></div>
+                </div>
+            </div>
+
+            <!-- Context Grid -->
+            <h3 style="margin: 1.5rem 0 0.75rem; font-size: 1rem;">Match Context</h3>
+            <div class="grid-6" id="context-grid"></div>
+
+            <!-- Playing XI -->
+            <h3 style="margin: 1.5rem 0 0.75rem; font-size: 1rem;">Playing XI</h3>
+            <div class="grid-2">
+                <div class="card" id="xi-team-a"></div>
+                <div class="card" id="xi-team-b"></div>
+            </div>
+
+            <!-- 3 Reasons & Upset Path -->
+            <div class="grid-2">
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem; font-size: 1rem;" id="reasons-title">3 Reasons Winner Wins</h3>
+                    <div id="reasons-list"></div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem; font-size: 1rem;" id="upset-title">Loser's Path to an Upset</h3>
+                    <div id="upset-list"></div>
+                    <div class="text-warning font-sm" style="margin-top: 0.75rem; font-weight: 600;" id="upset-prob"></div>
+                </div>
+            </div>
+
+            <!-- Matchups -->
+            <div class="card">
+                <h3 style="margin-bottom: 0.75rem; font-size: 1rem;">Key Matchups</h3>
+                <div id="matchups-grid" class="grid-6"></div>
+            </div>
+            
+            <!-- Limitations -->
+            <div class="text-muted font-sm card" style="text-align: center;">
+                <strong>Data Limitations:</strong><br><br>
+                <div id="limitations-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

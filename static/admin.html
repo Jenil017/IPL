@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#0A0A0F">
+    <title>Admin - CricPredict</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="brand">🏏 CricPredict</div>
+        <div class="nav-links">
+            <a href="/static/dashboard.html">Dashboard</a>
+            <a href="/static/history.html">History</a>
+            <a href="/static/chat.html">Chat</a>
+            <a href="/static/upload.html" class="admin-only hidden">Upload</a>
+            <a href="/static/admin.html" class="active admin-only hidden">Admin</a>
+        </div>
+        <div class="user-controls">
+            <button id="btn-logout" class="btn-logout">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container admin-grid">
+        <!-- User List -->
+        <div class="card">
+            <h3 style="margin-bottom: 1rem; font-size: 1rem;">Manage Users</h3>
+            <div class="table-scroll">
+                <table id="users-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add User -->
+        <div class="card" style="align-self: start;">
+            <h3 style="margin-bottom: 1rem; font-size: 1rem;">Add Viewer Account</h3>
+            <form id="add-user-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="new-username" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Password (min 4 chars)</label>
+                    <input type="password" id="new-password" class="form-control" minlength="4" required>
+                </div>
+                <div id="add-status" style="margin-bottom: 0.75rem; font-size: 0.85rem;"></div>
+                <button type="submit" class="btn-primary">Create Viewer</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Match Management -->
+        <div class="card">
+            <h3 style="margin-bottom: 1rem; font-size: 1rem;">Match Management (Dashboard Control)</h3>
+            <p class="text-muted font-sm mb-1">Set which match is currently shown on the global dashboard. By default, the latest upload is shown.</p>
+            <div class="table-scroll">
+                <table id="matches-table">
+                    <thead>
+                        <tr>
+                            <th>Match ID</th>
+                            <th>Teams</th>
+                            <th>Status</th>
+                            <th>Dashboard Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matches-body">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/admin.js"></script>
+</body>
+</html>

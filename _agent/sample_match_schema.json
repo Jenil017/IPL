@@ -1,0 +1,595 @@
+{
+  "_schema": {
+    "version": "1.0.0",
+    "name": "IPL Match Prediction — Universal Schema",
+    "description": "Fixed rigid schema for all IPL matches. Same structure every match. Fill null for unknowns (pre-toss). Based on the 4-Dimension 60-Parameter framework.",
+    "dimensions": {
+      "D1": "Team Strength & Composition  — max 25 pts",
+      "D2": "Venue & Environmental Factors — max 20 pts",
+      "D3": "Player Form & Head-to-Head   — max 30 pts",
+      "D4": "Recent Form & Momentum       — max 15 pts",
+      "TOTAL": "max 90 pts"
+    }
+  },
+
+  "match_info": {
+    "match_id":       "IPL2026_M04",
+    "season":         2026,
+    "match_number":   4,
+    "stage":          "league",
+    "team_a":         "Punjab Kings",
+    "team_b":         "Gujarat Titans",
+    "team_a_short":   "PBKS",
+    "team_b_short":   "GT",
+    "venue_name":     "Maharaja Yadavindra Singh International Cricket Stadium",
+    "venue_city":     "Mullanpur, New Chandigarh",
+    "date":           "2026-03-31",
+    "start_time_ist": "19:30",
+    "day_or_daynight":"day-night",
+    "neutral_venue":  false
+  },
+
+  "toss": {
+    "winner":   null,
+    "decision": null,
+    "note":     "Pre-toss — fill at 7:00 PM IST. Toss at Mullanpur is significant: batting first wins 67% (10/15 T20s since 2023). Toss winner very likely to bat first."
+  },
+
+  "playing_xi": {
+    "team_a": {
+      "confirmed": false,
+      "players": [
+        { "name": "Priyansh Arya",       "batting_position": 1,  "role": "batter",             "overseas": false, "captain": false, "wicketkeeper": false },
+        { "name": "Prabhsimran Singh",   "batting_position": 2,  "role": "batter",             "overseas": false, "captain": false, "wicketkeeper": true  },
+        { "name": "Cooper Connolly",     "batting_position": 3,  "role": "batting_allrounder", "overseas": true,  "captain": false, "wicketkeeper": false },
+        { "name": "Shreyas Iyer",        "batting_position": 4,  "role": "batter",             "overseas": false, "captain": true,  "wicketkeeper": false },
+        { "name": "Nehal Wadhera",       "batting_position": 5,  "role": "batter",             "overseas": false, "captain": false, "wicketkeeper": false },
+        { "name": "Shashank Singh",      "batting_position": 6,  "role": "batter",             "overseas": false, "captain": false, "wicketkeeper": false },
+        { "name": "Marcus Stoinis",      "batting_position": 7,  "role": "batting_allrounder", "overseas": true,  "captain": false, "wicketkeeper": false },
+        { "name": "Marco Jansen",        "batting_position": 8,  "role": "bowling_allrounder", "overseas": true,  "captain": false, "wicketkeeper": false },
+        { "name": "Xavier Bartlett",     "batting_position": 9,  "role": "bowler",             "overseas": true,  "captain": false, "wicketkeeper": false },
+        { "name": "Arshdeep Singh",      "batting_position": 10, "role": "bowler",             "overseas": false, "captain": false, "wicketkeeper": false },
+        { "name": "Yuzvendra Chahal",    "batting_position": 11, "role": "bowler",             "overseas": false, "captain": false, "wicketkeeper": false }
+      ],
+      "overseas_count": 4,
+      "impact_player_options": ["Vijaykumar Vyshak", "Azmatullah Omarzai", "Musheer Khan", "Harpreet Brar"],
+      "missing_key_players": [
+        { "name": "Lockie Ferguson", "reason": "paternity leave", "impact": "high — lead express pacer absent" }
+      ]
+    },
+    "team_b": {
+      "confirmed": false,
+      "players": [
+        { "name": "Shubman Gill",        "batting_position": 1,  "role": "batter",             "overseas": false, "captain": true,  "wicketkeeper": false },
+        { "name": "Sai Sudharsan",       "batting_position": 2,  "role": "batter",             "overseas": false, "captain": false, "wicketkeeper": false },
+        { "name": "Jos Buttler",         "batting_position": 3,  "role": "batter",             "overseas": true,  "captain": false, "wicketkeeper": true  },
+        { "name": "Washington Sundar",   "batting_position": 4,  "role": "batting_allrounder", "overseas": false, "captain": false, "wicketkeeper": false },
+        { "name": "Glenn Phillips",      "batting_position": 5,  "role": "batting_allrounder", "overseas": true,  "captain": false, "wicketkeeper": false },
+        { "name": "Shahrukh Khan",       "batting_position": 6,  "role": "batter",             "overseas": false, "captain": false, "wicketkeeper": false },
+        { "name": "Rahul Tewatia",       "batting_position": 7,  "role": "batting_allrounder", "overseas": false, "captain": false, "wicketkeeper": false },
+        { "name": "Rashid Khan",         "batting_position": 8,  "role": "bowling_allrounder", "overseas": true,  "captain": false, "wicketkeeper": false },
+        { "name": "Mohammed Siraj",      "batting_position": 9,  "role": "bowler",             "overseas": false, "captain": false, "wicketkeeper": false },
+        { "name": "Prasidh Krishna",     "batting_position": 10, "role": "bowler",             "overseas": false, "captain": false, "wicketkeeper": false },
+        { "name": "Kagiso Rabada",       "batting_position": 11, "role": "bowler",             "overseas": true,  "captain": false, "wicketkeeper": false }
+      ],
+      "overseas_count": 4,
+      "impact_player_options": ["R. Sai Kishore", "Tom Banton", "Anuj Rawat", "Arshad Khan"],
+      "missing_key_players": []
+    }
+  },
+
+  "recent_form": {
+    "team_a": {
+      "last_5_results":          ["L", "W", "L", "W", "W"],
+      "last_5_results_detail": [
+        "Lost IPL 2025 Final vs RCB",
+        "Won IPL 2025 Q2 vs MI",
+        "Lost IPL 2025 Q1 vs RCB",
+        "Won IPL 2025 league vs PBKS",
+        "Won IPL 2025 league vs LSG"
+      ],
+      "wins_in_last_5":          3,
+      "current_season_record":   { "played": 0, "won": 0, "lost": 0 },
+      "win_streak_current":      0,
+      "lose_streak_current":     0,
+      "season_2025_finish":      "runners_up",
+      "motivation_note":         "Lost the final — extremely hungry to go one better in 2026"
+    },
+    "team_b": {
+      "last_5_results":          ["L", "L", "W", "W", "W"],
+      "last_5_results_detail": [
+        "Lost IPL 2025 Eliminator vs MI (at Mullanpur)",
+        "Lost IPL 2025 league vs KKR",
+        "Won IPL 2025 league vs KKR",
+        "Won IPL 2025 league vs RCB",
+        "Won IPL 2025 league vs LSG"
+      ],
+      "wins_in_last_5":          3,
+      "current_season_record":   { "played": 0, "won": 0, "lost": 0 },
+      "win_streak_current":      0,
+      "lose_streak_current":     0,
+      "season_2025_finish":      "eliminated_at_eliminator",
+      "motivation_note":         "Lost the Eliminator at this exact venue — extra motivation, but also bad memories here"
+    }
+  },
+
+  "head_to_head": {
+    "total_ipl_matches":      6,
+    "team_a_wins":            3,
+    "team_b_wins":            3,
+    "no_result":              0,
+    "tied":                   0,
+    "team_a_win_pct":         50.0,
+    "team_b_win_pct":         50.0,
+    "at_this_venue": {
+      "total":        2,
+      "team_a_wins":  1,
+      "team_b_wins":  1,
+      "detail": [
+        "2025: PBKS won vs GT at Mullanpur (league stage)",
+        "2024: GT won vs PBKS at Mullanpur (bowled PBKS out for 111)"
+      ]
+    },
+    "last_3_meetings": [
+      { "season": 2025, "winner": "PBKS", "venue": "Mullanpur" },
+      { "season": 2025, "winner": "GT",   "venue": "Ahmedabad" },
+      { "season": 2024, "winner": "GT",   "venue": "Mullanpur" }
+    ],
+    "key_player_matchups": [
+      {
+        "batter":             "Shubman Gill",
+        "bowler":             "Yuzvendra Chahal",
+        "dismissals_by_bowler": 3,
+        "advantage":          "bowler",
+        "note":               "Chahal has dismissed Gill 3 times — PBKS's biggest tactical weapon"
+      },
+      {
+        "batter":             "Shashank Singh",
+        "bowler":             "GT bowling (all)",
+        "batter_runs_vs_gt":  113,
+        "batter_sr_vs_gt":    198.24,
+        "dismissals":         0,
+        "advantage":          "batter",
+        "note":               "Shashank has 113 runs vs GT at SR 198.24 — dominates this bowling attack"
+      },
+      {
+        "batter":             "Priyansh Arya",
+        "bowler":             "Rashid Khan",
+        "advantage":          "unknown",
+        "note":               "No prior IPL data — fresh matchup to watch in overs 7-12"
+      }
+    ]
+  },
+
+  "key_batters": {
+    "team_a": [
+      {
+        "name":                   "Priyansh Arya",
+        "batting_position":       1,
+        "ipl_2025_runs":          475,
+        "ipl_2025_innings":       17,
+        "ipl_2025_average":       27.94,
+        "ipl_2025_strike_rate":   179.24,
+        "ipl_2025_hundreds":      1,
+        "ipl_2025_fifties":       2,
+        "ipl_2025_highest_score": 103,
+        "last_5_scores":          [103, 83, 70, 69, 24],
+        "form_rating":            "excellent",
+        "powerplay_sr":           188.46,
+        "vs_spin_sr":             155.0,
+        "vs_pace_sr":             195.0,
+        "role":                   "explosive_opener"
+      },
+      {
+        "name":                   "Prabhsimran Singh",
+        "batting_position":       2,
+        "ipl_2025_runs":          549,
+        "ipl_2025_innings":       17,
+        "ipl_2025_average":       32.29,
+        "ipl_2025_strike_rate":   160.52,
+        "ipl_2025_hundreds":      0,
+        "ipl_2025_fifties":       4,
+        "ipl_2025_highest_score": 83,
+        "last_5_scores":          [83, 71, 50, 45, 34],
+        "form_rating":            "good",
+        "powerplay_sr":           null,
+        "role":                   "anchor_opener"
+      },
+      {
+        "name":                   "Shreyas Iyer",
+        "batting_position":       4,
+        "ipl_2025_runs":          604,
+        "ipl_2025_innings":       17,
+        "ipl_2025_average":       40.27,
+        "ipl_2025_strike_rate":   175.0,
+        "ipl_2025_hundreds":      0,
+        "ipl_2025_fifties":       5,
+        "ipl_2025_highest_score": 82,
+        "last_5_scores":          [60, 44, 22, 18, 12],
+        "form_rating":            "moderate",
+        "venue_mullanpur_runs":   27,
+        "venue_mullanpur_innings":5,
+        "venue_mullanpur_sr":     100.0,
+        "venue_weakness_note":    "Only 27 runs in 5 innings at Mullanpur — clear venue weakness",
+        "role":                   "captain_anchor_middle"
+      },
+      {
+        "name":                   "Shashank Singh",
+        "batting_position":       6,
+        "ipl_2025_runs":          312,
+        "ipl_2025_innings":       14,
+        "ipl_2025_average":       31.2,
+        "ipl_2025_strike_rate":   162.5,
+        "last_5_scores":          [55, 44, 32, 18, 7],
+        "form_rating":            "moderate",
+        "vs_gt_runs":             113,
+        "vs_gt_sr":               198.24,
+        "vs_gt_dismissals":       0,
+        "role":                   "finisher_death_overs"
+      }
+    ],
+    "team_b": [
+      {
+        "name":                   "Shubman Gill",
+        "batting_position":       1,
+        "ipl_2025_runs":          650,
+        "ipl_2025_innings":       15,
+        "ipl_2025_average":       50.0,
+        "ipl_2025_strike_rate":   155.88,
+        "ipl_2025_hundreds":      0,
+        "ipl_2025_fifties":       7,
+        "ipl_2025_highest_score": 96,
+        "last_5_scores":          [93, 72, 55, 48, 28],
+        "form_rating":            "excellent",
+        "vs_chahal_dismissals":   3,
+        "vs_chahal_note":         "Dismissed by Chahal 3 times — vulnerability",
+        "role":                   "captain_opener_anchor"
+      },
+      {
+        "name":                   "Sai Sudharsan",
+        "batting_position":       2,
+        "ipl_2025_runs":          759,
+        "ipl_2025_innings":       15,
+        "ipl_2025_average":       54.21,
+        "ipl_2025_strike_rate":   156.17,
+        "ipl_2025_hundreds":      1,
+        "ipl_2025_fifties":       6,
+        "ipl_2025_highest_score": 108,
+        "last_5_scores":          [108, 82, 80, 65, 47],
+        "form_rating":            "excellent",
+        "injury_note":            "Recovered from rib fracture Jan 2026 — fitness 90%",
+        "partnership_with_gill_2025_runs": 912,
+        "role":                   "orange_cap_opener"
+      },
+      {
+        "name":                   "Jos Buttler",
+        "batting_position":       3,
+        "ipl_2025_runs":          538,
+        "ipl_2025_innings":       15,
+        "ipl_2025_average":       59.78,
+        "ipl_2025_strike_rate":   163.03,
+        "ipl_2025_hundreds":      0,
+        "ipl_2025_fifties":       5,
+        "last_5_scores":          [44, 26, 18, 11, 9],
+        "form_rating":            "poor",
+        "form_concern":           "T20 WC 2026 — avg 20.4, SR 135.39, highest score 26 in 8 matches",
+        "role":                   "explosive_no3"
+      },
+      {
+        "name":                   "Rahul Tewatia",
+        "batting_position":       7,
+        "ipl_2025_average":       28.0,
+        "ipl_2025_strike_rate":   162.0,
+        "last_5_scores":          [55, 44, 32, 18, 7],
+        "form_rating":            "moderate",
+        "role":                   "finisher_slog_specialist"
+      }
+    ]
+  },
+
+  "key_bowlers": {
+    "team_a": [
+      {
+        "name":                     "Arshdeep Singh",
+        "bowling_type":             "left_arm_fast_medium",
+        "ipl_2025_wickets":         18,
+        "ipl_2025_matches":         17,
+        "ipl_2025_economy":         8.56,
+        "ipl_2025_average":         23.0,
+        "ipl_2025_best_figures":    "3/16",
+        "ipl_career_wickets":       97,
+        "venue_mullanpur_best":     "4/29 vs SRH — most wickets at this venue",
+        "last_3_figures":           ["3/16", "2/28", "1/34"],
+        "economy_powerplay":        7.8,
+        "economy_death":            9.2,
+        "form_rating":              "excellent",
+        "role":                     "new_ball_and_death_lead_pacer"
+      },
+      {
+        "name":                     "Yuzvendra Chahal",
+        "bowling_type":             "right_arm_leg_spin",
+        "ipl_2025_wickets":         18,
+        "ipl_2025_matches":         17,
+        "ipl_2025_economy":         8.2,
+        "ipl_career_wickets":       205,
+        "ipl_career_economy":       8.1,
+        "vs_gill_dismissals":       3,
+        "last_3_figures":           ["3/28", "2/24", "1/32"],
+        "form_rating":              "excellent",
+        "role":                     "lead_spinner_middle_overs"
+      },
+      {
+        "name":                     "Marco Jansen",
+        "bowling_type":             "left_arm_fast",
+        "ipl_2025_wickets":         12,
+        "ipl_2025_matches":         14,
+        "ipl_2025_economy":         9.1,
+        "last_3_figures":           ["2/35", "1/28", "0/42"],
+        "form_rating":              "moderate",
+        "note":                     "Replacing Lockie Ferguson — will handle powerplay and death overs",
+        "role":                     "second_pacer_allrounder"
+      }
+    ],
+    "team_b": [
+      {
+        "name":                     "Rashid Khan",
+        "bowling_type":             "right_arm_leg_spin_googly",
+        "ipl_career_wickets":       150,
+        "ipl_career_economy":       6.8,
+        "ipl_2025_wickets":         12,
+        "ipl_2025_economy":         7.2,
+        "vs_pbks_wickets":          7,
+        "vs_pbks_bowling_avg":      24.57,
+        "vs_pbks_bowling_sr":       20.57,
+        "vs_pbks_best":             "3/22",
+        "last_3_figures":           ["3/22", "1/18", "2/28"],
+        "form_rating":              "good",
+        "role":                     "lead_spinner_matchup_bowler"
+      },
+      {
+        "name":                     "Kagiso Rabada",
+        "bowling_type":             "right_arm_fast",
+        "ipl_2025_wickets":         15,
+        "ipl_2025_economy":         9.3,
+        "ipl_career_wickets":       89,
+        "last_3_figures":           ["2/28", "1/36", "2/31"],
+        "form_rating":              "good",
+        "role":                     "lead_pacer_new_ball"
+      },
+      {
+        "name":                     "Mohammed Siraj",
+        "bowling_type":             "right_arm_fast_medium",
+        "ipl_2025_wickets":         11,
+        "ipl_2025_economy":         9.5,
+        "ipl_career_wickets":       63,
+        "last_3_figures":           ["1/32", "2/36", "0/44"],
+        "form_rating":              "moderate",
+        "form_concern":             "T20 WC 2026 struggles — economy 11.2 in last 4 T20Is",
+        "role":                     "second_pacer_swing"
+      }
+    ]
+  },
+
+  "venue_statistics": {
+    "venue_name":               "Maharaja Yadavindra Singh International Cricket Stadium, Mullanpur",
+    "ipl_matches_total":        17,
+    "batting_first_wins":       10,
+    "batting_second_wins":      7,
+    "batting_first_win_pct":    58.8,
+    "batting_second_win_pct":   41.2,
+    "avg_first_innings_score":  173,
+    "highest_score_at_venue":   219,
+    "highest_score_by":         "PBKS vs CSK IPL 2025",
+    "lowest_score_at_venue":    95,
+    "lowest_score_by":          "KKR vs PBKS IPL 2025",
+    "highest_chase_successful": 175,
+    "lowest_total_defended":    111,
+    "pitch_type":               "pace_friendly",
+    "pace_wicket_pct":          80.0,
+    "spin_wicket_pct":          20.0,
+    "boundary_dimensions": {
+      "square_off":    65,
+      "square_leg":    68,
+      "straight":      73,
+      "unit":          "meters"
+    },
+    "dew_factor":               "low_to_moderate",
+    "dew_note":                 "Windy conditions at Mullanpur reduce dew significantly vs coastal venues",
+    "toss_note":                "Teams batting first win 58.8% — slight advantage. Score 170+ = bat first wins 88% of the time at this venue",
+    "batting_first_score_rule": "If 1st innings >= 170 → bat first wins 88% | If 1st innings < 170 → chase wins 100%",
+    "key_bowler_records": {
+      "most_wickets":           "Arshdeep Singh & Harshal Patel (joint top)",
+      "best_figures":           "Arshdeep Singh 4/29 vs SRH"
+    }
+  },
+
+  "weather": {
+    "date":                 "2026-03-31",
+    "match_time_ist":       "19:30",
+    "source":               "AccuWeather / Sportskeeda",
+    "conditions":           "mainly_clear",
+    "temperature_c":        20,
+    "feels_like_c":         19,
+    "humidity_pct":         50,
+    "cloud_cover_pct":      44,
+    "wind_speed_kmh":       13,
+    "wind_direction":       "southerly",
+    "rain_probability_pct": 1,
+    "thunderstorm_probability_pct": 0,
+    "dew_expected":         "unlikely",
+    "dew_reason":           "Low humidity 50%, wind 13 km/h, clear skies — dew conditions not met",
+    "conditions_favor":     "batting_first — clear skies assist spinners; no dew to help chase"
+  },
+
+  "dimension_scoring": {
+    "note": "Scores calculated per skill framework rules. Each dimension scored independently then summed.",
+
+    "D1_team_strength": {
+      "max_points": 25,
+      "team_a": {
+        "squad_quality_score":    8,
+        "missing_players_penalty":-2,
+        "batting_depth_score":    5,
+        "bowling_variety_score":  4,
+        "overseas_quality_score": 3,
+        "total":                  18,
+        "notes": "Full-strength minus Lockie Ferguson (paternity). Pace bowling slightly weakened but Arshdeep+Jansen cover. Batting depth 1-8 is exceptional."
+      },
+      "team_b": {
+        "squad_quality_score":    7,
+        "missing_players_penalty": 0,
+        "batting_depth_score":    4,
+        "bowling_variety_score":  5,
+        "overseas_quality_score": 3,
+        "total":                  13,
+        "notes": "No injuries. But Buttler poor form (-1), Siraj poor T20 form (-1). Bowling is strong (Rashid+Rabada+Siraj+Prasidh). GT's batting drops off sharply after position 3."
+      },
+      "edge": "PBKS",
+      "margin": 5
+    },
+
+    "D2_venue_environment": {
+      "max_points": 20,
+      "team_a": {
+        "home_advantage_score":   4,
+        "venue_avg_score_pts":    5,
+        "batting_first_win_pts":  5,
+        "weather_toss_bonus":     2,
+        "total":                  14,
+        "notes": "Batting first wins 58.8% here. Clear skies help spinners (Chahal). PBKS at home. Home crowd worth 4pts. If PBKS win toss and bat first this score rises to 16."
+      },
+      "team_b": {
+        "home_advantage_score":   0,
+        "venue_avg_score_pts":    5,
+        "batting_first_win_pts":  3,
+        "weather_toss_bonus":     2,
+        "total":                  10,
+        "notes": "GT away from home. No home advantage. Venue is balanced (both teams can chase). GT lost Eliminator here last season = psychological disadvantage."
+      },
+      "edge": "PBKS",
+      "margin": 4
+    },
+
+    "D3_player_form_h2h": {
+      "max_points": 30,
+      "team_a": {
+        "batter_form_score":  7,
+        "bowler_form_score":  5,
+        "h2h_record_score":   2,
+        "venue_h2h_bonus":    1,
+        "total":              15,
+        "notes": "Arya excellent (+4), Prabhsimran good (+2), Iyer moderate (+1), Shashank moderate (+1). Arshdeep excellent (+3), Chahal excellent (+3), Jansen moderate (+1). H2H 50-50 = +2pts. Venue 1-1 = +1pt."
+      },
+      "team_b": {
+        "batter_form_score":  7,
+        "bowler_form_score":  4,
+        "h2h_record_score":   2,
+        "venue_h2h_bonus":    0,
+        "total":              13,
+        "notes": "Gill excellent (+4), Sudharsan excellent (+4), Buttler poor (-1), Tewatia moderate (+1) = 8. Rashid good (+3), Rabada good (+2), Siraj poor (-1) = 4. H2H 50-50 = +2pts."
+      },
+      "edge": "PBKS",
+      "margin": 2
+    },
+
+    "D4_momentum": {
+      "max_points": 15,
+      "team_a": {
+        "win_streak_score":       3,
+        "tournament_pressure_score": 2,
+        "defending_champion_bonus": 0,
+        "runners_up_hunger_bonus":  1,
+        "total":                  10,
+        "notes": "Won 3 of last 5 (+3). Runners-up last season = very high motivation (+1). Season opener = +2 pressure. Defending champions are RCB so no bonus, but runner-up hunger is real."
+      },
+      "team_b": {
+        "win_streak_score":       0,
+        "tournament_pressure_score": 2,
+        "defending_champion_bonus": 0,
+        "runners_up_hunger_bonus":  0,
+        "total":                  7,
+        "notes": "Won 3 of last 5 but last 2 were losses (eliminator exit). Negative momentum offset. Season opener motivation +2. Eliminated here last season = psychological weight -2."
+      },
+      "edge": "PBKS",
+      "margin": 3
+    },
+
+    "final_scores": {
+      "team_a_total":     57,
+      "team_b_total":     43,
+      "total_possible":   90,
+      "score_difference": 14,
+      "confidence_band":  "MEDIUM (8-15 pt gap)",
+      "win_probability": {
+        "team_a_pct": 57,
+        "team_b_pct": 43
+      },
+      "predicted_winner": "Punjab Kings (PBKS)",
+      "confidence_pct":   64,
+      "confidence_level": "medium",
+      "expected_margin":  "15-25 runs if batting first OR 5-7 wickets if chasing"
+    }
+  },
+
+  "prediction_report": {
+    "winner":             "Punjab Kings",
+    "winner_short":       "PBKS",
+    "confidence_pct":     64,
+    "confidence_level":   "medium",
+    "expected_team_a_score_range": [178, 192],
+    "expected_team_b_score_range": [158, 175],
+    "key_match_winner_player": {
+      "name":   "Yuzvendra Chahal",
+      "reason": "Has dismissed Gill 3 times. Clear night skies assist leg-spin. If Chahal removes Gill cheaply, GT's innings collapses past position 3."
+    },
+    "three_reasons_team_a_wins": [
+      {
+        "rank": 1,
+        "reason": "Home ground batting-first advantage",
+        "data":   "Batting first wins 58.8% at Mullanpur. When 1st innings score >= 170, batting team wins 88% of the time. PBKS batting depth 1-8 can easily post 180+."
+      },
+      {
+        "rank": 2,
+        "reason": "Chahal vs Gill — the decisive matchup",
+        "data":   "Chahal has dismissed Gill 3 times in their career. Clear skies tonight = no dew = dry pitch = leg-spin grip in middle overs. Gill's wicket is worth 2 others."
+      },
+      {
+        "rank": 3,
+        "reason": "GT's death-batting collapses after position 3",
+        "data":   "Buttler in terrible form (avg 20.4, SR 135 in last 8 T20s). GT score 150+ only when Gill+Sudharsan both fire. PBKS death bowling (Arshdeep+Jansen) can restrict GT to sub-170 chases."
+      }
+    ],
+    "team_b_path_to_victory": [
+      "Condition 1: Gill-Sudharsan post 80+ powerplay partnership (they scored 912 runs as a pair in 2025)",
+      "Condition 2: Buttler suddenly finds form at #3 and scores 60+ (breaking terrible 8-match drought)",
+      "Condition 3: Rashid Khan takes 3+ wickets in overs 9-15 and restricts PBKS to under 165"
+    ],
+    "team_b_upset_probability_if_all_3_happen": 72,
+
+    "key_risks": [
+      {
+        "risk":        "Toss goes against PBKS (GT win toss and bat first)",
+        "impact":      "Shifts probability to 55-45 in GT's favor — the single biggest flip factor",
+        "probability": "50% (coin flip)"
+      },
+      {
+        "risk":        "Shreyas Iyer fails again at Mullanpur (27 runs in 5 innings here)",
+        "impact":      "PBKS's middle-order spine breaks. Collapses from 3-5 become likely",
+        "probability": "40% — pattern is clear but form vs venue-specific stats is uncertain"
+      },
+      {
+        "risk":        "Gill-Sudharsan powerplay explosion (60+ in 6 overs)",
+        "impact":      "GT post 200+, PBKS chase under pressure with dew unlikely to help",
+        "probability": "30% — they did it 6 times in 2025 but form at this venue is mixed"
+      }
+    ],
+
+    "data_limitations": [
+      "Toss result unknown — single biggest shift factor",
+      "Actual playing XI not confirmed — Cooper Connolly vs Mitchell Owen still undecided",
+      "Sai Sudharsan rib injury — fitness at 90%, could have mobility impact",
+      "No 2026 in-season data for any player — using 2025 IPL as proxy",
+      "Proprietary data missing: team strategies, captain's field placements, real-time fitness"
+    ]
+  }
+}

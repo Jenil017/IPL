@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#0A0A0F">
+    <title>Upload JSON - CricPredict</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="brand">🏏 CricPredict</div>
+        <div class="nav-links">
+            <a href="/static/dashboard.html">Dashboard</a>
+            <a href="/static/history.html">History</a>
+            <a href="/static/chat.html">Chat</a>
+            <a href="/static/upload.html" class="active admin-only hidden">Upload</a>
+            <a href="/static/admin.html" class="admin-only hidden">Admin</a>
+        </div>
+        <div class="user-controls">
+            <button id="btn-logout" class="btn-logout">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 600px;">
+        <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Upload Match Prediction</h2>
+        <div class="card">
+            <form id="upload-form">
+                <div class="form-group">
+                    <label>Select Claude Prediction JSON file:</label>
+                    <input type="file" id="json-file" accept=".json" class="form-control" required>
+                </div>
+                <div id="upload-status" style="margin-bottom: 0.75rem; font-size: 0.9rem;"></div>
+                <button type="submit" class="btn-primary">Upload Prediction</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/upload.js"></script>
+</body>
+</html>

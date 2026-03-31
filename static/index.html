@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#0A0A0F">
+    <title>Login - CricPredict</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .login-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .login-logo .icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+        .login-logo .title {
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: var(--pbks);
+        }
+        .login-logo .sub {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="card login-card">
+            <div class="login-logo">
+                <div class="icon">🏏</div>
+                <div class="title">CricPredict</div>
+                <div class="sub">IPL Match Prediction System</div>
+            </div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" class="form-control" placeholder="Enter username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="Enter password" required autocomplete="current-password">
+                </div>
+                <div id="error-msg" class="text-danger hidden" style="margin-bottom: 0.75rem; text-align: center; font-size: 0.9rem;"></div>
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/auth.js"></script>
+    <script>
+        if (getCurrentUser()) {
+            window.location.href = '/static/dashboard.html';
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const err = document.getElementById('error-msg');
+            
+            err.classList.add('hidden');
+            
+            const formData = new URLSearchParams();
+            formData.append('username', u);
+            formData.append('password', p);
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    setToken(data.access_token);
+                    const user = getCurrentUser();
+                    if(user.role === 'admin') window.location.href = '/static/upload.html';
+                    else window.location.href = '/static/dashboard.html';
+                } else {
+                    const data = await res.json();
+                    err.innerText = data.detail || 'Login failed';
+                    err.classList.remove('hidden');
+                }
+            } catch (error) {
+                err.innerText = 'Network error — check your connection';
+                err.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
