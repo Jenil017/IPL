@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 "match_info": {
                     "match_id": matchId,
                     "season": 2026,
-                    "match_number": "TBA",
+                    "match_number": 0,
                     "stage": "league",
                     "team_a": t1.options[t1.selectedIndex].text.split(' (')[0],
                     "team_b": t2.options[t2.selectedIndex].text.split(' (')[0],
