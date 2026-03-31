@@ -1,5 +1,6 @@
 import os
 import uuid
+import logging
 from datetime import datetime
 from typing import List, Optional
 
@@ -15,7 +16,7 @@ from fastapi import (
 )
 from sqlmodel import Session, select, desc
 
-from database import get_session
+from database import engine, get_session
 from models import User, ChatMessage
 from auth import get_current_user, SECRET_KEY, ALGORITHM
 from jose import jwt, JWTError
@@ -35,7 +36,6 @@ async def get_chat_history(
     """Fetch the last 50 chat messages from the database."""
     statement = select(ChatMessage).order_by(desc(ChatMessage.timestamp)).limit(50)
     results = session.exec(statement).all()
-    # Reverse to show in chronological order for the client
     return list(reversed(results))
 
 
@@ -60,16 +60,14 @@ async def upload_chat_image(
 
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, session: Session = Depends(get_session)):
+async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time chat."""
-    # We can't use Depends(get_current_user) directly on WebSocket because it's not a standard HTTP request.
-    # We'll expect the client to send a token in the query params or as the first message.
-    # For simplicity, let's use a query parameter 'token' for connection.
     token = websocket.query_params.get("token")
     if not token:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
+    # Validate JWT
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -80,15 +78,17 @@ async def websocket_endpoint(websocket: WebSocket, session: Session = Depends(ge
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
-    user = session.exec(select(User).where(User.username == username)).first()
-    if not user:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        return
+    # Verify user exists using a short-lived session
+    with Session(engine) as session:
+        user = session.exec(select(User).where(User.username == username)).first()
+        if not user:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+        user_username = user.username  # grab the value before session closes
 
     await manager.connect(websocket)
     try:
         while True:
-            # We expect a JSON: {"content": "...", "image_url": "..."}
             data = await websocket.receive_json()
             content = data.get("content", "").strip()
             image_url = data.get("image_url")
@@ -96,24 +96,27 @@ async def websocket_endpoint(websocket: WebSocket, session: Session = Depends(ge
             if not content and not image_url:
                 continue
 
-            # Save to DB
-            new_msg = ChatMessage(
-                sender=user.username,
-                content=content,
-                image_url=image_url,
-                timestamp=datetime.utcnow()
-            )
-            session.add(new_msg)
-            session.commit()
-            session.refresh(new_msg)
+            # Use a fresh session for each message save
+            with Session(engine) as session:
+                new_msg = ChatMessage(
+                    sender=user_username,
+                    content=content,
+                    image_url=image_url,
+                    timestamp=datetime.utcnow()
+                )
+                session.add(new_msg)
+                session.commit()
+                session.refresh(new_msg)
 
-            # Broadcast to everyone
-            await manager.broadcast({
-                "id": new_msg.id,
-                "sender": new_msg.sender,
-                "content": new_msg.content,
-                "image_url": new_msg.image_url,
-                "timestamp": new_msg.timestamp.isoformat()
-            })
+                await manager.broadcast({
+                    "id": new_msg.id,
+                    "sender": new_msg.sender,
+                    "content": new_msg.content,
+                    "image_url": new_msg.image_url,
+                    "timestamp": new_msg.timestamp.isoformat()
+                })
     except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception as e:
+        logging.error(f"WebSocket error: {e}")
         manager.disconnect(websocket)
