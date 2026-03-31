@@ -4,21 +4,25 @@ from sqlmodel import create_engine, Session, SQLModel
 # We must import the models here so SQLModel knows about them
 from models import User, Prediction, ChatMessage
 
-# Use DATABASE_URL from environment, fallback to local SQLite for development
-database_url = os.getenv("DATABASE_URL", "sqlite:///data/ipl.db")
+from dotenv import load_dotenv
 
-# Connection arguments
+# Load variables from .env if present
+load_dotenv()
+
+# We REQUIRE a DATABASE_URL for all environments now.
+# Local development needs a .env file with DATABASE_URL=postgresql://user:pass@localhost:5432/db_name
+database_url = os.getenv("DATABASE_URL")
+
+if not database_url:
+    raise ValueError("CRITICAL: DATABASE_URL not set in environment or .env file.")
+
+# Force SQLAlchemy-compatible postgres scheme
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+# Render's PostgreSQL requires SSL in production
 connect_args = {}
-
-if database_url.startswith("sqlite"):
-    os.makedirs("data", exist_ok=True)
-    # Enable foreign keys for SQLite
-    connect_args = {"check_same_thread": False}
-else:
-    # Render's PostgreSQL requires SSL, and it often provides 'postgres://' 
-    # instead of 'postgresql://' (which SQLAlchemy prefers)
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+# No check_same_thread needed for Postgres
 
 engine = create_engine(database_url, connect_args=connect_args)
 
