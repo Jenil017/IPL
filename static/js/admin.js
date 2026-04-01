@@ -1,3 +1,25 @@
+function setComingSoonStatus(msg, isError) {
+    const el = document.getElementById('coming-soon-status');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.className = 'font-sm';
+    el.style.marginTop = '0.75rem';
+    if (msg) el.style.color = isError ? 'var(--danger)' : 'var(--success)';
+}
+
+/** Keep dropdowns aligned with the single coming-soon row from the API (after save or on load). */
+function syncComingSoonSelects(matches) {
+    const t1 = document.getElementById('cs-t1');
+    const t2 = document.getElementById('cs-t2');
+    if (!t1 || !t2 || !Array.isArray(matches)) return;
+    const slot = matches.find((m) => m.is_coming_soon_slot);
+    if (!slot || !slot.team_a_short || !slot.team_b_short) return;
+    const ok1 = [...t1.options].some((o) => o.value === slot.team_a_short);
+    const ok2 = [...t2.options].some((o) => o.value === slot.team_b_short);
+    if (ok1) t1.value = slot.team_a_short;
+    if (ok2) t2.value = slot.team_b_short;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     requireAuth(['admin']);
     await loadUsers();
@@ -35,66 +57,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (comingSoonForm) {
         comingSoonForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            setComingSoonStatus('', false);
             const t1 = document.getElementById('cs-t1');
             const t2 = document.getElementById('cs-t2');
             const btn = e.target.querySelector('button');
             const originalText = btn.innerText;
-            btn.innerText = "Initializing...";
+            btn.innerText = "Updating...";
             btn.disabled = true;
 
-            const matchId = `cs_${Date.now()}`;
-            
-            // Mock a valid schema to trick the backend into accepting it easily purely from JS frontend
-            const dummyPayload = {
-                "match_info": {
-                    "match_id": matchId,
-                    "season": 2026,
-                    "match_number": 0,
-                    "stage": "league",
-                    "team_a": t1.options[t1.selectedIndex].text.split(' (')[0],
-                    "team_b": t2.options[t2.selectedIndex].text.split(' (')[0],
-                    "team_a_short": t1.value,
-                    "team_b_short": t2.value,
-                    "venue_name": "TBD",
-                    "venue_city": "TBD",
-                    "date": "Coming Soon",
-                    "start_time_ist": "TBA"
-                },
-                "prediction_report": {
-                    "is_coming_soon": true,
-                    "winner": "TBD",
-                    "winner_short": "TBD",
-                    "confidence_pct": 0,
-                    "confidence_level": "none"
-                },
-                "dimension_scoring": {
-                    "final_scores": {}
-                }
+            if (!t1.value || !t2.value) {
+                setComingSoonStatus('Please choose both teams.', true);
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
+            }
+            if (t1.value === t2.value) {
+                setComingSoonStatus('Home and away must be different teams.', true);
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            const body = {
+                team_a: t1.options[t1.selectedIndex].text.split(' (')[0],
+                team_b: t2.options[t2.selectedIndex].text.split(' (')[0],
+                team_a_short: t1.value,
+                team_b_short: t2.value,
             };
 
-            const blob = new Blob([JSON.stringify(dummyPayload)], { type: "application/json" });
-            const formData = new FormData();
-            formData.append("file", blob, `${matchId}.json`);
-
             try {
-                const res = await fetch('/api/upload', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: formData
+                const res = await fetchWithAuth('/admin/coming-soon', {
+                    method: 'PUT',
+                    body: JSON.stringify(body),
                 });
 
+                const data = await res.json().catch(() => ({}));
                 if (res.ok) {
-                    alert("Premium luxury 'Coming Soon' screen successfully staged! It will show up on Dashboard.");
-                    e.target.reset();
+                    t1.value = body.team_a_short;
+                    t2.value = body.team_b_short;
                     await loadMatches();
+                    setComingSoonStatus('Saved. Dashboard is LIVE with these teams.', false);
+                } else if (res.status === 404 || (data.detail && String(data.detail).includes('Not Found'))) {
+                    setComingSoonStatus('Server is running old code: PUT /api/admin/coming-soon missing. Redeploy backend, then hard-refresh (Ctrl+Shift+R).', true);
                 } else {
-                    const text = await res.text();
-                    alert(`Error initializing scan: ${text}`);
+                    setComingSoonStatus(`Error: ${data.detail || res.statusText}`, true);
                 }
             } catch (err) {
-                alert(`Network Error: ${err.message}`);
+                setComingSoonStatus(`Network error: ${err.message}`, true);
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
@@ -167,8 +176,16 @@ async function loadMatches() {
         if (res.ok) {
             const matches = await res.json();
             renderMatches(matches);
+            syncComingSoonSelects(matches);
         }
     } catch (e) { console.error(e); }
+}
+
+function adminMatchIdLabel(m) {
+    if (m.is_coming_soon_slot) {
+        return '<span class="text-muted font-sm">Coming soon slot</span><br><span class="font-bold" style="font-size:0.8rem;">(one row — teams from form above)</span>';
+    }
+    return `<span class="font-bold">${m.match_id}</span>`;
 }
 
 function renderMatches(matches) {
@@ -181,29 +198,32 @@ function renderMatches(matches) {
     }
 
     const hasManualFeaturedMatch = matches.some(m => m.is_featured);
+    const firstRealUpload = matches.find(m => !m.is_coming_soon_slot);
+    const autoDashboardId = !hasManualFeaturedMatch && firstRealUpload ? firstRealUpload.id : null;
+
     let html = '';
-    
-    matches.forEach((m, index) => {
+
+    matches.forEach((m) => {
         const statusBadge = m.is_featured
             ? '<span class="badge bg-success" style="background:#10B981">LIVE ON DASHBOARD</span>'
-            : (!hasManualFeaturedMatch && index === 0)
+            : (autoDashboardId && m.id === autoDashboardId)
                 ? '<span class="badge bg-amber">AUTO ON DASHBOARD</span>'
                 : '<span class="text-muted font-sm">Standby</span>';
-        
+
         const actionBtn = m.is_featured
             ? `<button class="btn-logout" style="border-color:var(--danger); color:var(--danger)" onclick="setFeatured(${m.id}, false)">Reset to Auto</button>`
             : `<button class="btn-logout" style="border-color:var(--gt); color:var(--gt)" onclick="setFeatured(${m.id}, true)">Set as Dashboard</button>`;
-        
+
         html += `
             <tr>
-                <td class="font-bold">${m.match_id}</td>
+                <td>${adminMatchIdLabel(m)}</td>
                 <td><span class="text-pbks font-bold">${m.team_a_short}</span> vs <span class="text-gt font-bold">${m.team_b_short}</span></td>
                 <td>${statusBadge}</td>
                 <td>${actionBtn}</td>
             </tr>
         `;
     });
-    
+
     tbody.innerHTML = html;
 }
 

@@ -6,6 +6,7 @@ from sqlmodel import Session, select
 from database import get_session
 from auth import get_current_admin
 from models import User, Prediction
+from constants import COMING_SOON_MATCH_ID
 
 router = APIRouter(prefix="/api/upload", tags=["upload"])
 
@@ -36,10 +37,22 @@ async def upload_prediction(
     if not match_id:
         raise HTTPException(status_code=400, detail="match_id is required")
 
+    if match_id == COMING_SOON_MATCH_ID:
+        raise HTTPException(
+            status_code=400,
+            detail="Reserved match id: use Admin → Coming Soon to update the dashboard placeholder.",
+        )
+
     # Reject duplicate match_ids
     existing = session.exec(select(Prediction).where(Prediction.match_id == match_id)).first()
     if existing:
         raise HTTPException(status_code=400, detail=f"Match {match_id} already exists")
+
+    _raw_conf = prediction_report.get("confidence_pct")
+    try:
+        _conf_int = int(_raw_conf) if _raw_conf is not None else 0
+    except (TypeError, ValueError):
+        _conf_int = 0
 
     prediction = Prediction(
         match_id=match_id,
@@ -54,10 +67,10 @@ async def upload_prediction(
         venue_city=match_info.get("venue_city", ""),
         match_date=match_info.get("date", ""),
         start_time_ist=match_info.get("start_time_ist", ""),
-        predicted_winner=prediction_report.get("winner", ""),
-        predicted_winner_short=prediction_report.get("winner_short", ""),
-        confidence_pct=prediction_report.get("confidence_pct", 0),
-        confidence_level=prediction_report.get("confidence_level", ""),
+        predicted_winner=prediction_report.get("winner") or "",
+        predicted_winner_short=prediction_report.get("winner_short") or "",
+        confidence_pct=_conf_int,
+        confidence_level=prediction_report.get("confidence_level") or "",
         json_data=content.decode('utf-8'),
         uploaded_by=current_admin.username
     )

@@ -1,8 +1,8 @@
 # User & System Flow
-## IPL Match Prediction Web App
+## IPL Match Prediction Web App (CricPredict)
 
-**Version:** 1.0.0
-**Date:** 2026-03-31
+**Version:** 1.1.0 (synced with repo)  
+**Date:** 2026-04-01
 
 ---
 
@@ -11,49 +11,48 @@
 ### 1.1 Login Flow (All Users)
 
 ```
-[User visits any URL]
+[User opens /static/index.html]
         │
         ▼
-JWT in localStorage?
-  ├── NO  → Redirect to /login
-  └── YES → Validate JWT (not expired + valid signature)
-              ├── INVALID → Clear token → Redirect to /login
-              └── VALID   → Decode role
-                              ├── admin  → Proceed to requested page
-                              └── viewer → Proceed (if route allowed for viewers)
-                                           └── Upload/Admin route? → Redirect to /dashboard
+JWT in localStorage still valid?
+  ├── YES → Redirect to /static/dashboard.html
+  └── NO  → Show login form
 
-[Login Page]
-  User enters username + password → Submit
-        │
-        ▼
-  POST /api/login
+[Login form submit]
+  POST /api/login (application/x-www-form-urlencoded: username, password)
         │
   ┌─────┴─────┐
-FAIL (wrong creds)  SUCCESS
-  │                   │
-Show error msg     Receive JWT token
-                   Store in localStorage
-                        │
-                   Decode role from JWT
-                        │
-                   ┌────┴────┐
-                 admin      viewer
-                   │           │
-              /upload      /dashboard
+FAIL          SUCCESS
+  │             │
+Show detail   Store access_token in localStorage
+from API            │
+              Decode JWT payload (role, exp)
+              admin → /static/upload.html
+              viewer → /static/dashboard.html
 ```
+
+**Session length:** Access tokens expire per `auth.py` (currently **7 days**).
 
 ### 1.2 Logout Flow
 
 ```
-User clicks "Logout" button (any page)
+User clicks Logout
         │
         ▼
-Remove JWT from localStorage
+removeToken() → localStorage clear
         │
         ▼
-Redirect to /login
+Redirect to /static/index.html
 ```
+
+(No server-side logout endpoint.)
+
+### 1.3 Protected Pages
+
+`requireAuth(allowedRoles)` in `auth.js`:
+- Missing/expired JWT → `/static/index.html`
+- Wrong role (e.g. viewer on admin page) → `/static/dashboard.html`
+- Else → `setupNavbar` (show admin links if `role === 'admin'`)
 
 ---
 
@@ -62,106 +61,87 @@ Redirect to /login
 ### 2.1 Upload New Prediction JSON
 
 ```
-Admin on /upload page
+Admin on STATIC:/static/upload.html
         │
         ▼
-Drags JSON file onto drop zone  (OR clicks and selects file)
+Select .json → Submit
         │
         ▼
-FileReader reads file as text
+POST /api/upload  (Authorization: Bearer …)
+  multipart form-data field: file
         │
         ▼
-Frontend preview: show match_info summary
-(team names, venue, date)
+Server: admin role check
+  ├── not admin → 403
+  └── admin → parse JSON
+        ├── missing keys / bad JSON → 400 + detail
+        ├── duplicate match_id → 400
+        └── INSERT predictions (is_featured defaults false)
+              Return { message, id }
         │
         ▼
-Admin clicks "Upload Prediction"
-        │
-        ▼
-POST /api/upload
-  Headers: Authorization: Bearer <token>
-  Body: multipart form-data with JSON file
-        │
-        ▼
-FastAPI: Check role = admin
-  ├── NOT admin → 403 Forbidden
-  └── IS admin  → Parse JSON
-                    │
-              Schema valid?
-          ┌────────┴────────┐
-         NO                YES
-          │                 │
-  Return error         match_id unique?
-  (missing fields)   ┌──────┴──────┐
-                     NO            YES
-                     │              │
-             Return error       Extract fields
-             ("Already         INSERT into predictions
-              uploaded")              │
-                                Return 201 Created
-                                      │
-                                Frontend shows success
-                                      │
-                                "View Prediction" button
-                                → Redirect to /dashboard
+Frontend redirects to /static/dashboard.html
 ```
 
-### 2.2 Mark Actual Match Result
+### 2.2 Featured Match (Dashboard Override)
 
 ```
-Admin on /history page
+Admin on /static/admin.html → “Match Dashboard Control”
         │
         ▼
-Sees match row with "Pending" status
+GET /api/admin/predictions
+  → list with is_featured; UI labels “LIVE ON DASHBOARD” vs “AUTO ON DASHBOARD”
         │
         ▼
-Clicks "Mark Result" button
+“Set as Dashboard” → PATCH /api/admin/predictions/{id}/feature
+  (clears any other featured row, sets this one)
+        │
+“Reset to Auto” → DELETE /api/admin/predictions/{id}/feature
         │
         ▼
-Modal opens: "Who won?"
-  [Team A Name]   [Team B Name]
-        │
-Admin clicks winner
+GET /api/predictions/latest now returns:
+  featured row if any, else latest uploaded_at
+```
+
+### 2.3 “Coming Soon” Staging
+
+```
+Admin on /static/admin.html
+  “Initialize Scan: Coming Soon”
         │
         ▼
+Builds minimal JSON with prediction_report.is_coming_soon = true
+POST /api/upload as synthetic .json file
+        │
+        ▼
+Dashboard loads latest/featured JSON → detects flag → shows coming-soon UI
+```
+
+### 2.4 Mark Actual Match Result
+
+```
+Admin on /static/history.html
+        │
+        ▼
+Row with is_correct === null → “Mark Result”
+        │
+        ▼
+Modal: two buttons (team A short / team B short)
 PATCH /api/predictions/{id}/result
-  Body: { "actual_winner": "Punjab Kings", "actual_winner_short": "PBKS" }
+  { actual_winner, actual_winner_short }
         │
         ▼
-Server computes is_correct:
-  predicted_winner == actual_winner → is_correct = 1
-  else → is_correct = 0
-        │
-        ▼
-UPDATE predictions table
-        │
-        ▼
-History table row updates live
-Accuracy summary recalculates
+Server: if already marked → 400
+        Compare actual_winner_short to predicted_winner_short
+          equal → is_correct = 1, else 0
+        Store actual_winner fields + result_marked_at
 ```
 
-### 2.3 Add New Viewer User
+### 2.5 Add / Toggle Viewer User
 
 ```
-Admin on /admin page
-        │
-        ▼
-Fills "Add User" form:
-  Username: [input]
-  Password: [input]
-  Role: Viewer (fixed — cannot create admin via UI)
-        │
-        ▼
-POST /api/admin/users
-        │
-        ▼
-Server checks: username unique?
-  ├── NO  → Error: "Username already taken"
-  └── YES → Hash password (bcrypt)
-              INSERT into users (role='viewer')
-              Return 201 Created
-                    │
-              User appears in users list
+POST /api/admin/users  { username, password }  (password min 4)
+PATCH /api/admin/users/{id}  { is_active }
 ```
 
 ---
@@ -171,243 +151,97 @@ Server checks: username unique?
 ### 3.1 View Latest Prediction
 
 ```
-Viewer logs in → /dashboard
-        │
-        ▼
 GET /api/predictions/latest
-  Headers: Authorization: Bearer <token>
         │
         ▼
-Response: full prediction JSON
-        │
-        ▼
-JavaScript renders all sections:
-  1. Match hero banner
-  2. Winner prediction card (probability bar animates)
-  3. Dimension scorecard (bars animate on scroll)
-  4. Match context grid
-  5. Playing XI
-  6. Key matchups
-  7. Top performers (tab: Batters / Bowlers)
-  8. 3 Reasons Winner Wins
-  9. Upset path
- 10. Key risks (accordion)
- 11. Recent form chips
- 12. Data limitations
-
-        │
-        ▼
-Toss null? → Show amber banner at top
-Toss filled? → Show toss result in hero
+If prediction_report.is_coming_soon → simplified “coming soon” screen
+Else → renderDashboard(): hero, winner card, dimensions, etc.
+Toss null → show toss banner (dashboard.js)
 ```
 
 ### 3.2 View Match History
 
 ```
-Viewer navigates to /history
+GET /api/predictions  (summaries)
+GET /api/accuracy
         │
         ▼
-GET /api/predictions  (all predictions, summary fields only)
-GET /api/accuracy     (overall + by-confidence stats)
-        │
-        ▼
-Render accuracy summary banner at top:
-  Total: N | Correct: N | Wrong: N | Accuracy: N%
-  By confidence: HIGH: N% | MEDIUM: N% | LOW: N%
-
-Render history table (latest first):
-  | Match | Date | Teams | Predicted | Confidence | Result | ✅/❌ |
-        │
-        ▼
-User clicks any row
-        │
-        ▼
-GET /api/predictions/{id}  (full JSON)
-        │
-        ▼
-Full prediction card opens in modal
-(same sections as /dashboard but for that specific match)
+history.js sorts client-side by numeric part of match_id (ascending)
+  → table order is match-number order, not strictly “uploaded last first”
 ```
+
+Row click / modal for full detail: use `GET /api/predictions/{id}` as needed (implementation may vary).
 
 ---
 
 ## 4. System Flows
 
-### 4.1 First Run / Initialization
+### 4.1 Startup
 
 ```
-Server starts (uvicorn main:app)
+uvicorn main:app
         │
         ▼
-database.py: create_all() → Creates SQLite tables if not exist
-        │
-        ▼
-seed.py: check users table
-  users count == 0?
-  ├── YES → Insert jainil (admin) + takshat (viewer)
-  │         passwords bcrypt-hashed
-  └── NO  → Skip seeding (already initialized)
-        │
-        ▼
-FastAPI mounts /static → serves HTML, CSS, JS files
-        │
-        ▼
-App ready at http://localhost:8000
+Startup event:
+  init_db()  → SQLModel.metadata.create_all(PostgreSQL)
+  seed_users() → jainil (admin), takshat (viewer) if absent
+  asyncio.create_task(keep_alive_loop)  # optional self-ping
 ```
 
-### 4.2 JWT Token Lifecycle
+**Requirement:** `DATABASE_URL` must be set (see `database.py`).
+
+### 4.2 Chat
 
 ```
-Login → JWT generated (HS256)
-  Payload: { "sub": "jainil", "role": "admin", "exp": <24h from now> }
-  Signed with SECRET_KEY from .env
+/static/chat.html
         │
         ▼
-Stored in client localStorage
-        │
-        ▼
-Each API call: Authorization: Bearer <token>
-        │
-        ▼
-FastAPI dependency: verify_token(token)
-  1. Decode token (raises if invalid signature)
-  2. Check exp (raises if expired)
-  3. Return { username, role }
-        │
-        ▼
-Route proceeds with user context
+GET /api/chat/history
+WebSocket: wss://<host>/api/chat/ws?token=<JWT>
+Optional: POST /api/chat/upload for image → include image_url in WS JSON
 ```
 
-### 4.3 Accuracy Calculation
-
-```
-GET /api/accuracy
-        │
-        ▼
-Query predictions table:
-  SELECT
-    COUNT(*)              AS total,
-    SUM(is_correct)       AS correct,
-    COUNT(*) - SUM(is_correct)  AS incorrect
-  WHERE is_correct IS NOT NULL  -- only decided matches
-
-  ALSO GROUP BY confidence_level
-        │
-        ▼
-Compute:
-  overall_accuracy = correct / total * 100
-
-  high_accuracy   = correct(HIGH) / total(HIGH) * 100
-  medium_accuracy = correct(MEDIUM) / total(MEDIUM) * 100
-  low_accuracy    = correct(LOW) / total(LOW) * 100
-        │
-        ▼
-Return JSON response to frontend
-```
+On disconnect, client reconnects after **3 seconds** (`chat.js`).
 
 ---
 
 ## 5. Page Access Matrix
 
-| Route       | No Auth | Viewer | Admin |
-|-------------|---------|--------|-------|
-| `/`         | ✅ Login page | Redirect → /dashboard | Redirect → /upload |
-| `/dashboard`| ❌ → /login | ✅ | ✅ |
-| `/history`  | ❌ → /login | ✅ | ✅ |
-| `/chat`     | ❌ → /login | ✅ | ✅ |
-| `/upload`   | ❌ → /login | ❌ → /dashboard | ✅ |
-| `/admin`    | ❌ → /login | ❌ → /dashboard | ✅ |
+| Page (under /static/) | No Auth | Viewer | Admin |
+|----------------------|---------|---------|-------|
+| index.html           | ✅      | use JWT → dashboard | use JWT → dashboard/upload per login |
+| dashboard.html       | ❌      | ✅      | ✅    |
+| history.html         | ❌      | ✅      | ✅    |
+| chat.html            | ❌      | ✅      | ✅    |
+| upload.html          | ❌      | ❌ → dashboard | ✅    |
+| admin.html           | ❌      | ❌ → dashboard | ✅    |
+
+Root path `/` redirects to `/static/index.html`.
 
 ---
 
-## 7. Chat Room Flows
+## 6. Data Flow Summary
 
-### 7.1 WebSocket Connection Flow
 ```
-User navigates to /chat
+Claude / tooling → prediction .json file
         │
         ▼
-requireAuth() checks valid token
+Admin POST /api/upload
         │
-        ▼
-GET /api/chat/history (HTTP)
-Render last 50 messages
-        │
-        ▼
-WebSocket Handshake:
-ws://host/api/chat/ws?token=<JWT>
-        │
-        ▼
-Server (FastAPI):
-1. Decode JWT from query param
-2. Verify signature & expiry
-3. Manager: connect(websocket)
-        │
-        ▼
-Status Change: "Connected"
-```
-
-### 7.2 Real-time Messaging Flow
-```
-User types message + (optional) image
-        │
-        ▼
-Image present?
-  ├── YES → POST /api/chat/upload
-  │         Store temp URL
-  └── NO  → Proceed
-        │
-        ▼
-Socket sends JSON:
-{ "content": "text", "image_url": "url" }
-        │
-        ▼
-Server processes:
-1. Save to SQLite chat_messages
-2. Broadcast to ALL active sockets
-        │
-        ▼
-Client: Render new bubble
-Auto-scroll to bottom
+        ├── Dashboard: /api/predictions/latest (featured or latest)
+        ├── History summaries + accuracy
+        └── Admin can pin featured match or stage “coming soon”
 ```
 
 ---
 
-## 6. Error Handling
+## 7. Error Handling (Representative)
 
-| Scenario                          | User-Facing Response                              |
-|-----------------------------------|---------------------------------------------------|
-| Wrong login credentials           | "Invalid username or password"                    |
-| JWT expired                       | Auto-redirect to /login with "Session expired"   |
-| Viewer accesses admin route       | Redirect to /dashboard silently                   |
-| Upload invalid JSON               | Inline error list of missing required fields      |
-| Duplicate match_id upload         | "Match already exists in database"                |
-| No predictions in DB yet          | Dashboard shows empty state: "No predictions yet" |
-| API server down                   | Frontend shows "Unable to connect" banner         |
-
----
-
-## 7. Data Flow Summary
-
-```
-Claude AI Skill
-     │
-     │ (User copies JSON output)
-     ▼
-Admin pastes/saves as .json file
-     │
-     ▼
-Upload via /upload page
-     │
-     ▼
-FastAPI validates + stores in SQLite
-     │
-     ├──► Dashboard renders latest prediction (all users)
-     │
-     ├──► History table shows new row (pending result)
-     │
-     └──► Admin marks result after match
-              │
-              ▼
-         Accuracy tracker updates
-```
+| Scenario | Typical response |
+|----------|------------------|
+| Bad login | 401, detail from API |
+| Inactive user | 400 |
+| Viewer hits admin API | 403 |
+| Duplicate match_id | 400 |
+| Mark result twice | 400 “Result already marked” |
+| No predictions | latest → 404; dashboard shows empty state |

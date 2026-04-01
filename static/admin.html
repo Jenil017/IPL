@@ -65,8 +65,8 @@
         <div class="card" style="margin-bottom: 2rem; border-color: var(--pbks);">
             <div style="display: flex; align-items: center; justify-content: space-between;">
                 <div>
-                    <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">🚀 Initialize Scan: Coming Soon</h3>
-                    <p class="text-muted font-sm mb-1">Set a "Coming Soon" prediction. This replaces the dashboard with a premium loading UI until the real prediction json is uploaded.</p>
+                    <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">🚀 Dashboard: Coming Soon</h3>
+                    <p class="text-muted font-sm mb-1">There is <strong>one</strong> global coming-soon slot for the site. Choose two teams and save — the dashboard updates immediately (same row every time; no duplicate entries). Replace it with a real JSON upload when the prediction is ready.</p>
                 </div>
                 <div class="badge bg-pbks" style="font-size: 1rem;">PREMIUM FEATURE</div>
             </div>
@@ -75,6 +75,7 @@
                 <div class="form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
                     <label>Team 1 (Home)</label>
                     <select id="cs-t1" class="form-control" required>
+                        <option value="" selected disabled>Choose home team…</option>
                         <option value="PBKS">Punjab Kings (PBKS)</option>
                         <option value="GT">Gujarat Titans (GT)</option>
                         <option value="CSK">Chennai Super Kings (CSK)</option>
@@ -90,6 +91,7 @@
                 <div class="form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
                     <label>Team 2 (Away)</label>
                     <select id="cs-t2" class="form-control" required>
+                        <option value="" selected disabled>Choose away team…</option>
                         <option value="GT">Gujarat Titans (GT)</option>
                         <option value="PBKS">Punjab Kings (PBKS)</option>
                         <option value="CSK">Chennai Super Kings (CSK)</option>
@@ -103,15 +105,16 @@
                     </select>
                 </div>
                 <div style="flex: 0 0 auto;">
-                    <button type="submit" class="btn-primary" style="padding: 0.85rem 2rem;">Mark Coming Soon</button>
+                    <button type="submit" class="btn-primary" style="padding: 0.85rem 2rem;">Save Coming Soon</button>
                 </div>
             </form>
+            <div id="coming-soon-status" class="font-sm" style="margin-top: 0.75rem;" aria-live="polite"></div>
         </div>
 
         <!-- Match Management -->
         <div class="card">
             <h3 style="margin-bottom: 1rem; font-size: 1rem;">Match Management (Dashboard Control)</h3>
-            <p class="text-muted font-sm mb-1">Set which match is currently shown on the global dashboard. By default, the latest upload is shown. "Coming Soon" matches appear here too.</p>
+            <p class="text-muted font-sm mb-1">Control which <strong>real</strong> match is featured, plus one <strong>Coming soon slot</strong> row (teams come from the form above; old <code>cs_…</code> rows are removed). Saving Coming Soon sets it LIVE on the dashboard.</p>
             <div class="table-scroll">
                 <table id="matches-table">
                     <thead>
@@ -130,7 +133,7 @@
         </div>
     </div>
 
-    <script src="/static/js/auth.js"></script>
-    <script src="/static/js/admin.js"></script>
+    <script src="/static/js/auth.js?v=3"></script>
+    <script src="/static/js/admin.js?v=3"></script>
 </body>
 </html>

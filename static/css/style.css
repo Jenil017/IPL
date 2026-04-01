@@ -606,12 +606,12 @@ th {
   vertical-align: middle;
 }
 
-.cs-meta {
+/* .cs-meta {
   color: var(--text-muted);
   font-size: 1.1rem;
   margin-bottom: 3rem;
   letter-spacing: 1px;
-}
+} */
 
 .cs-scanner {
   position: relative;

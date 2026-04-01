@@ -1,26 +1,22 @@
 # Feature Specifications
-## IPL Match Prediction Web App
+## IPL Match Prediction Web App (CricPredict)
 
-**Version:** 1.0.0
-**Date:** 2026-03-31
+**Version:** 1.1.0 (synced with repo)  
+**Date:** 2026-04-01
 
 ---
 
 ## F1 — Authentication System
 
-### F1.1 Login Page (`/`)
-- Username + password form
-- "Invalid credentials" error on failure
-- On success: redirect based on role
-  - Admin → `/upload`
-  - Viewer → `/dashboard`
-- JWT stored in `localStorage`
-- "Remember me" keeps session for 7 days (default: 24h)
+### F1.1 Login Page (`/static/index.html`)
+- Username + password; OAuth2-style `POST /api/login` (form urlencoded).
+- On success: JWT in `localStorage`; redirect **admin** → `/static/upload.html`, **viewer** → `/static/dashboard.html`.
+- If already logged in (valid JWT), opening login redirects to dashboard.
+- Errors: show API `detail` or generic network message.
 
 ### F1.2 Session Management
-- Every protected page checks JWT on load
-- Expired or missing token → redirect to login
-- Logout button clears token + redirects to login
+- JWT validated client-side via `exp`; 401 from API clears token and sends user to login.
+- **Token lifetime:** 7 days (server `ACCESS_TOKEN_EXPIRE_MINUTES` in `auth.py`). There is no separate “remember me” toggle in the UI—the spec previously described 24h vs 7d; the code uses a single 7-day expiry.
 
 ### F1.3 Pre-seeded Users
 | Username | Password | Role   |
@@ -28,246 +24,120 @@
 | jainil   | jainil   | admin  |
 | takshat  | takshat  | viewer |
 
-Passwords stored as bcrypt hashes. Created automatically on first server run.
+Created on first startup if missing (`seed.py`).
 
 ---
 
 ## F2 — JSON Upload (Admin Only)
 
-### F2.1 Upload Page (`/upload`)
-- Drag-and-drop zone OR click-to-browse file picker
-- Accepts `.json` files only
-- File size limit: 5 MB
-- Live validation feedback before submit
+### F2.1 Upload Page (`/static/upload.html`)
+- File input + submit; `POST /api/upload` with `FormData` field `file`.
+- Must be `.json` (server checks extension).
 
-### F2.2 Schema Validation
-Checks for required top-level keys:
-- `match_info` (match_id, team_a, team_b, venue_city, date, start_time_ist)
-- `prediction_report` (winner, confidence_pct, confidence_level)
+### F2.2 Server Schema Validation
+Validated keys in `upload_router.py`:
+- `match_info` (must include `match_id`)
+- `prediction_report`
 - `dimension_scoring.final_scores`
-- `playing_xi` (team_a.players, team_b.players)
 
-On validation failure: show specific missing fields — do not save to DB.
+**Note:** The older spec also listed `playing_xi` as required—the **current server does not** require it for upload to succeed.
 
 ### F2.3 Duplicate Prevention
-- If `match_id` already exists in DB → reject with error: *"Match IPL2026_M04 already uploaded"*
-- Admin must delete existing record first (future feature)
+- Duplicate `match_id` → 400 with message like `Match <id> already exists`.
 
 ### F2.4 Success Behaviour
-- Store full raw JSON as string in `predictions.json_data`
-- Extract and store structured fields separately for queries
-- Show success toast → offer "View Prediction" button
+- Full JSON stored in `predictions.json_data`; scalar fields denormalized for listing/accuracy.
+- Frontend shows success + id, then redirects to dashboard.
 
 ---
 
-## F3 — Prediction Dashboard (`/dashboard`)
+## F2b — Featured Dashboard Match (Admin)
+
+- On `/static/admin.html`, **Match Dashboard Control** lists uploads from `GET /api/admin/predictions`.
+- **Set as Dashboard:** `PATCH /api/admin/predictions/{id}/feature` — only one featured row; others cleared.
+- **Reset to Auto:** `DELETE /api/admin/predictions/{id}/feature` — dashboard uses latest upload by `uploaded_at` when nothing is featured.
+- `GET /api/predictions/latest` respects this order: featured first, else newest upload.
+
+---
+
+## F2c — “Coming Soon” Placeholder (Admin)
+
+- Admin form builds a minimal JSON with `prediction_report.is_coming_soon: true` and uploads it.
+- `dashboard.js` detects the flag and shows a **coming soon** screen instead of the full prediction layout.
+
+---
+
+## F3 — Prediction Dashboard (`/static/dashboard.html`)
 
 ### F3.1 Data Source
-- Fetches `GET /api/predictions/latest`
-- Shows the most recently uploaded match
+- `GET /api/predictions/latest` (featured or latest—see F2b).
 
-### F3.2 UI Sections (in order)
+### F3.2 UI Sections
+Same conceptual sections as the original spec (hero, winner card, dimension scorecard, context, playing XI, matchups, top performers, reasons, upset path, risks, recent form, data limitations) **when** the payload is a full prediction JSON. Partial or “coming soon” payloads intentionally show reduced UI.
 
-#### Match Hero Banner
-- Team A name + short code (left, team color)
-- Team B name + short code (right, team color)
-- Match metadata: Match #, Stage, Venue, Date, Time, Day/Night badge
-- Previous season badges (e.g. "2025 Runners-up", "2025 Eliminated")
-
-#### Prediction Winner Card
-- "PREDICTED WINNER" label
-- Winner team name (large, bold)
-- Confidence % + confidence level text
-- Animated dual-color probability bar (team A color | team B color)
-- Expected score ranges for both teams
-- Margin description (e.g. "Win by 15-25 runs if batting first")
-
-#### 60-Parameter Dimension Scorecard
-- 4 rows: Team Strength, Venue & Environment, Player Form & H2H, Momentum
-- Columns: Dimension name, Team A score/max, Team B score/max, Edge badge
-- Dual progress bars per row (team A color ← → team B color)
-- Total row with bold styling
-
-#### Match Context Grid (6 cards)
-- Avg 1st Innings Score
-- Batting First Win %
-- H2H Overall (wins split)
-- H2H at This Venue
-- Weather (temp, conditions)
-- Dew Factor
-
-#### Playing XI (Side by Side)
-- Two-column layout: Team A | Team B
-- Each player row: Name + role badge
-- Special badges: `(C)` Captain, `(WK)` Wicketkeeper, `OS` Overseas
-- "Confirmed" or "Probable" tag per team
-
-#### Key Player Matchups
-- Card per matchup from `head_to_head.key_player_matchups`
-- Shows batter ⚔️ bowler
-- Advantage badge: `Bowler Edge` / `Batter Edge` / `Unknown`
-- Key stat (e.g. "3 dismissals" or "SR 198.24")
-
-#### Top Performers
-- Two tabs: **Top Batters** | **Top Bowlers**
-- Batter card: Name, role, last 5 scores (small chips), season avg, SR, form badge
-- Bowler card: Name, type, last 3 figures, wickets, economy, form badge
-
-#### 3 Reasons Winner Wins
-- Numbered cards (1, 2, 3) in winner's team color
-- Bold reason heading + supporting data point text
-
-#### Upset Path (Loser's Conditions)
-- Title: "[Team B]'s Path to Victory"
-- 3 numbered conditions from `team_b_path_to_victory`
-- Footer: "If all 3 happen → [X]% upset probability"
-
-#### Key Risks & Flip Factors
-- Expandable accordion cards per risk
-- Risk title + detail text + probability badge
-- Color: amber/yellow for risk tone
-
-#### Recent Form
-- Team A last 5: W/L badge chips with tooltip (match detail)
-- Team B last 5: W/L badge chips with tooltip
-- Side-by-side layout
-
-#### Data Limitations
-- Collapsible section at bottom
-- Bullet list from `prediction_report.data_limitations`
-- Subtitle: "Pre-toss prediction using 60-parameter framework"
-
-### F3.3 Toss Update Banner
-- If `toss.winner` is null → show amber banner: *"Toss not yet decided — prediction may shift ±8% post-toss"*
-- If toss is filled → show toss result prominently in match hero
+### F3.3 Toss Banner
+- If `toss.winner` is falsy, show pre-toss banner (`dashboard.js`).
 
 ---
 
-## F4 — Match History (`/history`)
+## F4 — Match History (`/static/history.html`)
 
-### F4.1 Accuracy Summary Bar
-At top of page:
-- **Total Predictions:** N
-- **Correct:** N (shown in green)
-- **Incorrect:** N (shown in red)
-- **Accuracy %:** shown as large number + circular progress ring
-- Breakdown by confidence:
-  - HIGH confidence accuracy %
-  - MEDIUM confidence accuracy %
-  - LOW confidence accuracy %
+### F4.1 Accuracy Summary
+- From `GET /api/accuracy`: total, correct, incorrect, overall %, high/medium/low breakdown.
 
 ### F4.2 History Table
-Columns:
-| Match | Date | Teams | Predicted Winner | Confidence | Actual Result | Correct? |
-|---|---|---|---|---|---|---|
+- Data from `GET /api/predictions`; **client sorts by numeric part of `match_id`** (ascending)—not strictly reverse chronological by upload time.
+- Pending results: badge + admin **Mark Result**; PATCH result uses short codes for winner fields in the current UI.
 
-- Reverse chronological order (latest first)
-- "Pending" badge if result not yet marked
-- ✅ / ❌ icon for correct/incorrect
-- Click row → opens full prediction card in modal
-
-### F4.3 Admin: Mark Result Button
-- Visible only to admin users
-- Per row: "Mark Result" button (if result is pending)
-- Opens a small modal: "Who won? [Team A] / [Team B]"
-- On confirm: PATCH `/api/predictions/{id}/result`
-- Row updates immediately with result + correct/incorrect badge
+### F4.3 Admin: Mark Result
+- Modal chooses winner; **result cannot be changed** after `is_correct` is set (server returns 400).
 
 ---
 
-## F5 — Admin Panel (`/admin`)
+## F5 — Admin Panel (`/static/admin.html`)
 
 ### F5.1 User List
-- Table: Username, Role, Status (Active/Inactive), Created At, Actions
-- Actions: Toggle Active/Inactive
+- Table with role badge, active/inactive, deactivate/activate for non-admin users.
 
 ### F5.2 Add New User
-- Form: Username, Password, Role (viewer only — cannot create new admin via UI)
-- Validation: username must be unique, password min 6 chars
-- On success: user appears in list immediately
+- Username + password; **minimum 4 characters** (server + form).
+- New accounts are always **viewer** role.
+
+### F5.3 Match Dashboard Control
+- See F2b.
+
+### F5.4 Coming Soon Stager
+- See F2c.
 
 ---
 
 ## F6 — Navigation
 
-### Navbar (All pages)
-- Logo / App name: **CricPredict** (or chosen name)
-- Links:
-    - Dashboard
-    - History
-    - Chat
-    - Upload *(admin only — hidden for viewers)*
-    - Admin Panel *(admin only — hidden for viewers)*
-- Right side: Logged-in username + role badge + Logout button
+- Brand: **CricPredict**; links under `/static/*.html`.
+- Admin-only nav items use `.admin-only` + `setupNavbar` in `auth.js`.
 
 ---
 
 ## F7 — Responsive Design
 
-| Breakpoint | Behaviour                                    |
-|------------|----------------------------------------------|
-| Desktop (>1024px) | Full multi-column layout              |
-| Tablet (768–1024px) | Single column, condensed cards      |
-| Mobile (<768px) | Stacked layout, hamburger nav menu    |
-
-Key responsive adjustments:
-- Playing XI: stacked vertically on mobile (not side-by-side)
-- Dimension scorecard: horizontal scroll on small screens
-- History table: horizontal scroll on mobile
+Original breakpoint guidance still applies as design intent; verify against `style.css` for exact behavior.
 
 ---
 
 ## F8 — Visual Design System
 
-### Color Palette
-| Token              | Value       | Usage                        |
-|--------------------|-------------|------------------------------|
-| `--bg-base`        | `#0A0A0F`   | Page background              |
-| `--bg-card`        | `#111118`   | Card backgrounds             |
-| `--bg-glass`       | `rgba(255,255,255,0.04)` | Glassmorphism cards |
-| `--border`         | `rgba(255,255,255,0.08)` | Card borders         |
-| `--text-primary`   | `#F0F0F5`   | Main text                    |
-| `--text-muted`     | `#6B7280`   | Secondary text               |
-| `--pbks`           | `#E8175D`   | Punjab Kings accent          |
-| `--gt`             | `#1B4FD8`   | Gujarat Titans accent        |
-| `--success`        | `#10B981`   | Correct prediction           |
-| `--danger`         | `#EF4444`   | Wrong prediction             |
-| `--warning`        | `#F59E0B`   | Pending / risk               |
-
-### Typography
-- Font: **Outfit** (Google Fonts)
-- Weights: 400 (body), 600 (labels), 700 (headings), 800 (hero numbers)
-
-### Animations
-- Probability bar: slide in on page load (CSS `@keyframes`)
-- Dimension score bars: animate from 0 on scroll into view (`IntersectionObserver`)
-- Cards: subtle fade-up on load (`opacity 0 → 1, translateY 20px → 0`)
-- Hover effects: card lift (`transform: translateY(-2px)`) + glow shadow
+Dark theme, glassmorphism, team accent tokens as in `style.css` (`--pbks`, `--gt`, etc.).
 
 ---
 
-## F9 — Real-time Chat Room (`/chat`)
+## F9 — Real-time Chat (`/static/chat.html`)
 
-### F9.1 Chat Interface
-- Premium, glassmorphism-inspired UI
-- Scrollable message area with auto-scroll to latest
-- Connection status indicator (Connecting/Connected/Reconnecting)
-- Navbar integration for all users
+- `GET /api/chat/history` then WebSocket `ws(s)://<host>/api/chat/ws?token=<JWT>`.
+- Optional `POST /api/chat/upload` for images; messages broadcast to all connections.
+- Reconnect **3s** after close (`chat.js`).
 
-### F9.2 Messaging Features
-- Real-time broadcasting via WebSockets
-- Support for text messages and image attachments
-- Message bubbles with sender name, text, and timestamp
-- Color-coded senders (PBKS accent for received, GT accent for sent)
-- XSS sanitization for all message content
+---
 
-### F9.3 Media Support
-- Image upload (JPG, PNG, GIF, WEBP)
-- Max file size: 5 MB
-- Real-time image preview before sending
-- Click image to open in new tab
+## F10 — Deploy / Keep-Alive (Backend)
 
-### F9.4 Connection Logic
-- JWT authentication required on WebSocket handshake
-- Persistent history (fetches last 50 messages on load)
-- Automatic reconnection logic with exponential backoff placeholder (3s)
+- If `RENDER_EXTERNAL_URL` is set, background task pings `GET /api/ping` every ~14 minutes to reduce idle spin-down (host-dependent).

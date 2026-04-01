@@ -198,10 +198,12 @@
   },
 
   "prediction_report": {
-    "winner": "Lucknow Super Giants",
-    "winner_short": "LSG",
-    "confidence_pct": 53,
-    "confidence_level": "medium",
+    "prediction_pending": true,
+    "internet_analysis_used": false,
+    "winner": null,
+    "winner_short": null,
+    "confidence_pct": 0,
+    "confidence_level": "none",
     "expected_team_a_score_range": [155, 170],
     "expected_team_b_score_range": [140, 160],
     "key_match_winner_player": {

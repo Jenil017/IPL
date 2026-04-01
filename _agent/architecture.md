@@ -1,8 +1,8 @@
 # System Architecture
-## IPL Match Prediction Web App
+## IPL Match Prediction Web App (CricPredict)
 
-**Version:** 1.0.0
-**Date:** 2026-03-31
+**Version:** 1.1.0 (synced with repo)  
+**Date:** 2026-04-01
 
 ---
 
@@ -11,27 +11,25 @@
 ```
 ┌─────────────────────────────────────────────────────┐
 │                    CLIENT BROWSER                    │
-│   HTML + CSS + Vanilla JS (served by FastAPI)        │
+│   HTML + CSS + Vanilla JS (served under /static/)    │
 │                                                      │
-│   /login   /dashboard   /history   /upload   /admin  │
+│   index.html  dashboard  history  chat  upload  admin│
 └───────────────────┬─────────────────────────────────┘
-                    │ HTTP (REST API + JWT)
+                    │ HTTP (REST + JWT) + WebSocket (chat)
                     ▼
 ┌─────────────────────────────────────────────────────┐
 │                  FASTAPI BACKEND                     │
 │                   (Python 3.11+)                     │
 │                                                      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  ┌──────────┐  │
-│  │   auth   │  │  upload  │  │  predictions API │  │   chat   │  │
-│  │  router  │  │  router  │  │     router       │  │  manager │  │
-│  └──────────┘  └──────────┘  └──────────────────┘  └──────────┘  │
+│  auth │ upload │ predictions │ results │ admin │ chat│
 │                                                      │
 │  ┌──────────────────────────────────────────────┐   │
-│  │            SQLite (via SQLModel)              │   │
-│  │            data/ipl.db                        │   │
+│  │     PostgreSQL (DATABASE_URL + SQLModel)     │   │
 │  └──────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────┘
 ```
+
+**Deployment extras:** Optional background **keep-alive** loop (httpx) pinging `GET /api/ping` every 14 minutes when `RENDER_EXTERNAL_URL` is set—for hosts like Render that spin down idle services.
 
 ---
 
@@ -40,48 +38,40 @@
 ```
 d:\IPL\
 │
-├── main.py                  # FastAPI app entry point
-├── database.py              # DB engine + session setup
-├── models.py                # SQLModel table definitions
-├── auth.py                  # JWT logic + bcrypt hashing
-├── seed.py                  # Pre-seed admin + viewer users
+├── main.py                  # FastAPI app, CORS, /api/ping, startup (DB init + seed + keep-alive)
+├── database.py              # PostgreSQL engine via DATABASE_URL (required); get_session
+├── models.py                # SQLModel: User, Prediction, ChatMessage (+ Token DTOs)
+├── auth.py                  # JWT (HS256), bcrypt, get_current_user / get_current_admin
+├── seed.py                  # Seed admin (jainil) + viewer (takshat) if missing
+├── migrate.py               # Legacy SQLite helper: add is_featured (if using old data/ipl.db)
+├── websocket_manager.py     # WebSocket ConnectionManager (broadcast)
 │
 ├── routers/
-│   ├── auth_router.py       # POST /login, POST /logout
-│   ├── upload_router.py     # POST /api/upload (admin only)
-│   ├── prediction_router.py # GET /api/predictions, GET /api/predictions/{id}
-│   ├── result_router.py     # PATCH /api/predictions/{id}/result (admin only)
-│   ├── admin_router.py      # GET/POST /api/admin/users (admin only)
-│   └── chat_router.py       # WebSocket + HTTP chat endpoints
-│
-├── websocket_manager.py     # WebSocket logic & connection storage
+│   ├── auth_router.py       # POST /api/login, GET /api/me
+│   ├── upload_router.py     # POST /api/upload (admin)
+│   ├── prediction_router.py # GET predictions, latest, by id; GET /api/accuracy
+│   ├── result_router.py     # PATCH /api/predictions/{id}/result (admin)
+│   ├── admin_router.py      # Users CRUD + featured match APIs
+│   └── chat_router.py       # GET history, POST image upload, WS /api/chat/ws
 │
 ├── static/
-│   ├── index.html           # Login page
-│   ├── dashboard.html       # Latest prediction display
-│   ├── history.html         # Match history + accuracy table
-│   ├── upload.html          # Admin JSON upload page
-│   ├── admin.html           # Admin user management page
-│   ├── chat.html            # Real-time chat interface
-│   ├── css/
-│   │   └── style.css        # Global styles (dark theme, glassmorphism)
-│   └── js/
-│       ├── auth.js          # Login/logout, JWT storage
-│       ├── dashboard.js     # Fetch + render prediction card
-│       ├── history.js       # Fetch + render history table
-│       ├── upload.js        # File upload handler
-│       ├── admin.js         # Admin panel logic
-│       └── chat.js          # Chat WebSocket client logic
+│   ├── index.html           # Login → /static/upload.html (admin) or dashboard
+│   ├── dashboard.html       # Latest OR featured prediction; “coming soon” mode
+│   ├── history.html         # History + accuracy + admin mark result
+│   ├── upload.html          # JSON upload
+│   ├── admin.html           # Users, featured dashboard picker, “coming soon” staging
+│   ├── chat.html
+│   ├── favicon.png
+│   ├── css/style.css
+│   ├── js/auth.js, dashboard.js, history.js, upload.js, admin.js, chat.js
+│   └── uploads/chat/        # Chat images (UUID filenames)
 │
-├── data/
-│   └── ipl.db               # SQLite database (auto-created on first run)
+├── _agent/                  # Product/spec samples + deploy helper scripts
+│   ├── prd.md, architecture.md, features.md, flow.md
+│   ├── sample_match_schema.json, match_*.json
+│   ├── upload_to_prod.py, unfeature_prod.py
 │
-├── _agent/
-│   ├── prd.md
-│   ├── architecture.md
-│   ├── features.md
-│   └── flow.md
-│
+├── .env.example             # DATABASE_URL, SECRET_KEY, RENDER_EXTERNAL_URL
 └── requirements.txt
 ```
 
@@ -89,202 +79,133 @@ d:\IPL\
 
 ## 3. Tech Stack
 
-| Layer       | Technology          | Version  | Purpose                              |
-|-------------|---------------------|----------|--------------------------------------|
-| Backend     | FastAPI             | 0.110+   | REST API, file serving, routing      |
-| ORM         | SQLModel            | 0.0.16+  | SQLite ORM (Pydantic + SQLAlchemy)   |
-| Database    | SQLite              | Built-in | Persistent file-based storage        |
-| Auth        | python-jose + bcrypt| Latest   | JWT tokens + password hashing        |
-| Server      | Uvicorn             | 0.29+    | ASGI server for FastAPI              |
-| Frontend    | HTML + CSS + JS     | Vanilla  | No framework, served as static files |
-| Fonts       | Google Fonts        | CDN      | Outfit font family                   |
+| Layer       | Technology            | Purpose                                      |
+|-------------|-----------------------|----------------------------------------------|
+| Backend     | FastAPI               | REST, static mount, WebSocket                |
+| ORM         | SQLModel / SQLAlchemy | Models + queries                             |
+| Database    | **PostgreSQL**        | `DATABASE_URL` required (local or Render)    |
+| Auth        | python-jose + passlib/bcrypt | JWT + password hashing                |
+| Server      | Uvicorn               | ASGI                                         |
+| HTTP client | httpx                 | Keep-alive self-ping (optional)              |
+| Frontend    | Vanilla HTML/CSS/JS   | No SPA framework                             |
+
+Pinned versions: see root `requirements.txt` (includes `psycopg2-binary`, `httpx`, `bcrypt==4.0.1`, etc.).
 
 ---
 
 ## 4. Database Schema
 
 ### Table: `users`
-```sql
-CREATE TABLE users (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    username    TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    role        TEXT NOT NULL DEFAULT 'viewer',  -- 'admin' | 'viewer'
-    is_active   INTEGER NOT NULL DEFAULT 1,
-    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-```
+- `id`, `username` (unique), `password_hash`, `role` (`admin` | `viewer`), `is_active`, `created_at`
 
 ### Table: `predictions`
-```sql
-CREATE TABLE predictions (
-    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
-    match_id             TEXT UNIQUE NOT NULL,    -- e.g. IPL2026_M04
-    season               INTEGER NOT NULL,
-    match_number         INTEGER NOT NULL,
-    stage                TEXT NOT NULL,
-    team_a               TEXT NOT NULL,
-    team_b               TEXT NOT NULL,
-    team_a_short         TEXT NOT NULL,
-    team_b_short         TEXT NOT NULL,
-    venue_name           TEXT NOT NULL,
-    venue_city           TEXT NOT NULL,
-    match_date           TEXT NOT NULL,
-    start_time_ist       TEXT NOT NULL,
-    predicted_winner     TEXT NOT NULL,
-    predicted_winner_short TEXT NOT NULL,
-    confidence_pct       INTEGER NOT NULL,
-    confidence_level     TEXT NOT NULL,
-    json_data            TEXT NOT NULL,           -- full raw JSON stored as string
-    actual_winner        TEXT DEFAULT NULL,        -- filled after match
-    actual_winner_short  TEXT DEFAULT NULL,
-    is_correct           INTEGER DEFAULT NULL,     -- 1=correct, 0=wrong, NULL=pending
-    uploaded_by          TEXT NOT NULL,
-    uploaded_at          TEXT NOT NULL DEFAULT (datetime('now')),
-    result_marked_at     TEXT DEFAULT NULL
-);
-```
+Same as earlier spec, plus:
+- **`is_featured`** (`BOOLEAN`, default false) — at most one should be featured; admin APIs enforce clearing others when setting.
 
 ### Table: `chat_messages`
-```sql
-CREATE TABLE chat_messages (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    sender      TEXT NOT NULL,
-    content     TEXT NOT NULL,
-    image_url   TEXT DEFAULT NULL,
-    timestamp   TEXT NOT NULL DEFAULT (datetime('now'))
-);
-```
+- `id`, `sender`, `content`, `image_url`, `timestamp`
 
 ---
 
 ## 5. API Endpoints
 
 ### Auth
-| Method | Endpoint      | Auth     | Description              |
-|--------|---------------|----------|--------------------------|
-| POST   | `/api/login`  | None     | Returns JWT access token |
-| POST   | `/api/logout` | JWT      | Clears session           |
+| Method | Endpoint     | Auth | Description |
+|--------|--------------|------|-------------|
+| POST   | `/api/login` | None | OAuth2 form: `username`, `password` → JWT |
+| GET    | `/api/me`    | JWT  | Current username + role |
 
-### Predictions
-| Method | Endpoint                          | Auth    | Role   | Description                     |
-|--------|-----------------------------------|---------|--------|---------------------------------|
-| GET    | `/api/predictions`                | JWT     | Any    | List all predictions (summary)  |
-| GET    | `/api/predictions/latest`         | JWT     | Any    | Latest prediction full JSON     |
-| GET    | `/api/predictions/{id}`           | JWT     | Any    | Single prediction full JSON     |
-| POST   | `/api/upload`                     | JWT     | Admin  | Upload new prediction JSON      |
-| PATCH  | `/api/predictions/{id}/result`    | JWT     | Admin  | Mark actual result              |
+Logout is **client-only** (remove token from `localStorage`); there is no `/api/logout` route.
 
-### Accuracy
-| Method | Endpoint         | Auth | Role | Description               |
-|--------|------------------|------|------|---------------------------|
-| GET    | `/api/accuracy`  | JWT  | Any  | Overall + by-confidence % |
+### Predictions & accuracy
+| Method | Endpoint | Auth | Role | Description |
+|--------|----------|------|------|-------------|
+| GET    | `/api/predictions` | JWT | Any | Summary list (all rows, order from DB) |
+| GET    | `/api/predictions/latest` | JWT | Any | Full JSON: **featured** row if `is_featured`, else **most recent** `uploaded_at` |
+| GET    | `/api/predictions/{id}` | JWT | Any | Full JSON + `_meta.actual_winner_short`, `_meta.is_correct` |
+| POST   | `/api/upload` | JWT | Admin | Multipart file field `file` (`.json`) |
+| GET    | `/api/accuracy` | JWT | Any | Totals + `high_` / `medium_` / `low_` confidence accuracy % |
+
+### Results
+| Method | Endpoint | Auth | Admin | Description |
+|--------|----------|------|-------|-------------|
+| PATCH  | `/api/predictions/{id}/result` | JWT | Yes | Body: `actual_winner`, `actual_winner_short`. Sets `is_correct` by comparing **short codes**. Fails if already marked. |
 
 ### Admin
-| Method | Endpoint            | Auth | Role  | Description         |
-|--------|---------------------|------|-------|---------------------|
-| GET    | `/api/admin/users`  | JWT  | Admin | List all users      |
-| POST   | `/api/admin/users`  | JWT  | Admin | Add new viewer      |
-| PATCH  | `/api/admin/users/{id}` | JWT | Admin | Toggle active status |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET    | `/api/admin/users` | List users |
+| POST   | `/api/admin/users` | Create viewer (`username`, `password`; min length **4**) |
+| PATCH  | `/api/admin/users/{id}` | Toggle `is_active` (cannot deactivate self) |
+| GET    | `/api/admin/predictions` | List uploads + `is_featured` (dashboard control UI) |
+| PATCH  | `/api/admin/predictions/{id}/feature` | Clear other featured flags; set this row featured |
+| DELETE | `/api/admin/predictions/{id}/feature` | Clear featured state (dashboard falls back to latest upload) |
+
+### Chat
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET    | `/api/chat/history` | Last 50 messages, chronological |
+| POST   | `/api/chat/upload` | Image for chat → URL under `/static/uploads/chat/` |
+| WS     | `/api/chat/ws?token=<JWT>` | Text + optional `image_url` in JSON messages |
+
+### Ops
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET    | `/api/ping` | `{"status":"alive",...}` for keep-alive |
 
 ---
 
-## 6. Authentication Flow
+## 6. Authentication
 
-```
-User submits login form
-        │
-        ▼
-POST /api/login → verify username + bcrypt hash
-        │
-   ┌────┴────┐
-  Fail      Pass
-   │         │
-403 Error   Generate JWT (HS256, 24h expiry)
-              │
-              ▼
-        Store JWT in localStorage
-              │
-              ▼
-All API requests: Authorization: Bearer <token>
-              │
-              ▼
-FastAPI dependency: verify_token() checks role
-              │
-         ┌───┴───┐
-       Admin    Viewer
-         │         │
-    All routes   Read-only routes only
-```
+- JWT **HS256**, payload: `sub` (username), `role`, `exp`.
+- **Expiry:** `ACCESS_TOKEN_EXPIRE_MINUTES = 7 * 24 * 60` (7 days) in `auth.py`.
+- `SECRET_KEY` from environment (see `.env.example`); dev fallback exists—override in production.
 
 ---
 
-## 7. JSON Upload Flow
+## 7. Upload Validation (Server)
 
-```
-Admin drags JSON file onto upload page
-        │
-        ▼
-Frontend reads file via FileReader API
-        │
-        ▼
-POST /api/upload (multipart/form-data)
-        │
-        ▼
-FastAPI: validate JSON schema
-  - Required fields present?
-  - match_id unique?
-        │
-   ┌────┴────┐
-  Fail      Pass
-   │         │
-Error msg   Extract key fields → INSERT into predictions table
-              │
-              ▼
-        Return success + new prediction id
-              │
-              ▼
-        Frontend redirects to /dashboard
-```
+Required keys (see `upload_router.py`):
+- `match_info` (must include `match_id`)
+- `prediction_report`
+- `dimension_scoring.final_scores`
+
+Duplicate `match_id` → 400. File must end with `.json`.
+
+**“Coming soon” mode:** Admin UI can upload a minimal JSON with `prediction_report.is_coming_soon: true` (see `admin.js`). Dashboard renders placeholder UI when that flag is set.
 
 ---
 
-## 8. Security Considerations
+## 8. Security Notes
 
-| Concern            | Solution                                               |
-|--------------------|--------------------------------------------------------|
-| Password storage   | bcrypt hash with salt (never plain text)               |
-| JWT secret         | Stored in `.env` file (not in source code)             |
-| Role enforcement   | FastAPI dependency injection checks role on every route |
-| SQL injection      | SQLModel ORM prevents raw SQL injection                |
-| File upload safety | Validate JSON schema server-side before saving         |
-| CORS               | Restricted to localhost only (no public API exposure)  |
-
----
-
-## 9. Running the Application
-
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the server (seeds DB + users on first run)
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-
-# Access the app
-http://localhost:8000
-```
+| Topic | Implementation |
+|-------|----------------|
+| Passwords | bcrypt via passlib |
+| JWT secret | `SECRET_KEY` env |
+| Roles | `get_current_admin` on upload, results, admin routes |
+| CORS | `allow_origins=["*"]` in `main.py` (tighten for public deployments if needed) |
+| WebSocket | JWT in query param; invalid token → close |
 
 ---
 
-## 10. requirements.txt
+## 9. Running Locally
 
-```
-fastapi==0.110.0
-uvicorn==0.29.0
-sqlmodel==0.0.16
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.9
-python-dotenv==1.0.1
-```
+1. Create `.env` with `DATABASE_URL=postgresql://...` and `SECRET_KEY=...`.
+2. `pip install -r requirements.txt`
+3. `uvicorn main:app --reload --host 0.0.0.0 --port 8000`
+4. Open `http://localhost:8000/static/index.html` (root `/` redirects to static login).
+
+---
+
+## 10. Frontend Routes (actual URLs)
+
+| Page | Path |
+|------|------|
+| Login | `/static/index.html` |
+| Dashboard | `/static/dashboard.html` |
+| History | `/static/history.html` |
+| Chat | `/static/chat.html` |
+| Upload | `/static/upload.html` |
+| Admin | `/static/admin.html` |
+
+API calls use `fetch('/api/...')` with `Authorization: Bearer <token>`.

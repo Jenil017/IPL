@@ -35,16 +35,26 @@ async function loadHistory() {
         if (res.ok) {
             currentMatches = await res.json();
             
-            // Sort by match_id correctly tracking numeric value ("match_2" vs "match_10")
             currentMatches.sort((a, b) => {
-                const numA = parseInt(a.match_id.replace(/\D/g, '')) || 0;
-                const numB = parseInt(b.match_id.replace(/\D/g, '')) || 0;
+                const numA = (a.match_number != null && a.match_number !== '')
+                    ? parseInt(a.match_number, 10)
+                    : (parseInt(String(a.match_id).replace(/\D/g, ''), 10) || 0);
+                const numB = (b.match_number != null && b.match_number !== '')
+                    ? parseInt(b.match_number, 10)
+                    : (parseInt(String(b.match_id).replace(/\D/g, ''), 10) || 0);
                 return numA - numB;
             });
             
             renderTable();
         }
     } catch (e) { console.error(e); }
+}
+
+function formatMatchLabel(m) {
+    const n = (m.match_number != null && m.match_number !== '')
+        ? parseInt(m.match_number, 10)
+        : (parseInt(String(m.match_id).replace(/\D/g, ''), 10) || 0);
+    return 'M' + String(n).padStart(2, '0');
 }
 
 function renderTable() {
@@ -68,14 +78,21 @@ function renderTable() {
         }
         
         const adminClass = (currentAdminUser && currentAdminUser.role === 'admin') ? '' : 'hidden';
+        const ready = m.prediction_ready === true;
+        const predCell = ready && m.predicted_winner_short
+            ? `<td class="font-bold">${m.predicted_winner_short}</td>`
+            : '<td class="text-muted">—</td>';
+        const confCell = ready && m.confidence_pct != null
+            ? `<td class="font-sm">${m.confidence_pct}%</td>`
+            : '<td class="text-muted">—</td>';
         
         html += `
             <tr>
-                <td class="font-bold">${m.match_id.split('_')[1] || m.match_id}</td>
+                <td class="font-bold">${formatMatchLabel(m)}</td>
                 <td class="text-muted font-sm">${m.match_date}</td>
                 <td><span class="text-pbks font-bold">${m.team_a_short}</span> vs <span class="text-gt font-bold">${m.team_b_short}</span></td>
-                <td class="font-bold">${m.predicted_winner_short}</td>
-                <td class="font-sm">${m.confidence_pct}%</td>
+                ${predCell}
+                ${confCell}
                 <td>${resultHtml}</td>
                 <td class="action-col ${adminClass}">${actionHtml}</td>
             </tr>

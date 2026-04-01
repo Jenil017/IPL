@@ -1,30 +1,104 @@
 import json
-from typing import Annotated
+from typing import Annotated, Optional, Tuple
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select, func
 
 from database import get_session
 from auth import get_current_user
 from models import User, Prediction
+from constants import COMING_SOON_MATCH_ID
 
 router = APIRouter(prefix="/api", tags=["predictions"])
 
+
+def _history_prediction_display(p: Prediction) -> Tuple[Optional[str], Optional[int], bool]:
+    """History Predicted + Conf: driven only by stored JSON prediction_report (not DB denormalized columns)."""
+    def _clean_short(val) -> Optional[str]:
+        if val is None:
+            return None
+        s = str(val).strip()
+        if not s:
+            return None
+        u = s.upper()
+        if u in ("TBD", "N/A"):
+            return None
+        return s
+
+    def _clean_conf(val) -> Optional[int]:
+        if val is None:
+            return None
+        try:
+            n = int(val)
+        except (TypeError, ValueError):
+            return None
+        if n <= 0:
+            return None
+        return n
+
+    try:
+        data = json.loads(p.json_data)
+        pr = data.get("prediction_report") or {}
+    except (json.JSONDecodeError, TypeError):
+        return None, None, False
+
+    if pr.get("prediction_pending") is True or pr.get("is_coming_soon") is True:
+        return None, None, False
+    # Explicitly false = fixture / draft only; publish a pick by setting true in JSON when you upload the real analysis
+    if pr.get("internet_analysis_used") is False:
+        return None, None, False
+
+    ws_src = pr.get("winner_short") if "winner_short" in pr else None
+    cf_src = pr.get("confidence_pct") if "confidence_pct" in pr else None
+    cl_src = pr.get("confidence_level") if "confidence_level" in pr else None
+
+    ws = _clean_short(ws_src)
+    cf = _clean_conf(cf_src)
+    cl = (cl_src or "").strip().lower() if cl_src is not None else ""
+    cl_ok = bool(cl) and cl != "none"
+    if ws is None or cf is None or not cl_ok:
+        return None, None, False
+    return ws, cf, True
+
+
+def _is_coming_soon_placeholder(p: Prediction) -> bool:
+    """Dashboard-only placeholders (admin 'Coming Soon'); hide from history list."""
+    if p.match_id == COMING_SOON_MATCH_ID:
+        return True
+    if isinstance(p.match_id, str) and p.match_id.startswith("cs_"):
+        return True
+    if p.match_date == "Coming Soon":
+        return True
+    try:
+        data = json.loads(p.json_data)
+        return bool((data.get("prediction_report") or {}).get("is_coming_soon"))
+    except (json.JSONDecodeError, TypeError):
+        return False
+
+
 @router.get("/predictions")
 def get_predictions(current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
-    # Returns summary list
+    # Returns summary list (excludes coming-soon stubs — those are for dashboard only)
     preds = session.exec(select(Prediction).order_by(Prediction.uploaded_at.desc())).all()
-    return [{
-        "id": p.id,
-        "match_id": p.match_id,
-        "match_date": p.match_date,
-        "team_a_short": p.team_a_short,
-        "team_b_short": p.team_b_short,
-        "predicted_winner_short": p.predicted_winner_short,
-        "confidence_pct": p.confidence_pct,
-        "actual_winner_short": p.actual_winner_short,
-        "is_correct": p.is_correct,
-        "uploaded_at": p.uploaded_at
-    } for p in preds]
+    rows = []
+    for p in preds:
+        if _is_coming_soon_placeholder(p):
+            continue
+        disp_short, disp_conf, ready = _history_prediction_display(p)
+        rows.append({
+            "id": p.id,
+            "match_id": p.match_id,
+            "match_number": p.match_number,
+            "match_date": p.match_date,
+            "team_a_short": p.team_a_short,
+            "team_b_short": p.team_b_short,
+            "predicted_winner_short": disp_short,
+            "confidence_pct": disp_conf,
+            "prediction_ready": ready,
+            "actual_winner_short": p.actual_winner_short,
+            "is_correct": p.is_correct,
+            "uploaded_at": p.uploaded_at
+        })
+    return rows
 
 @router.get("/predictions/latest")
 def get_latest_prediction(current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
