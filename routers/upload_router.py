@@ -43,10 +43,7 @@ async def upload_prediction(
             detail="Reserved match id: use Admin → Coming Soon to update the dashboard placeholder.",
         )
 
-    # Reject duplicate match_ids
     existing = session.exec(select(Prediction).where(Prediction.match_id == match_id)).first()
-    if existing:
-        raise HTTPException(status_code=400, detail=f"Match {match_id} already exists")
 
     _raw_conf = prediction_report.get("confidence_pct")
     try:
@@ -54,29 +51,54 @@ async def upload_prediction(
     except (TypeError, ValueError):
         _conf_int = 0
 
-    prediction = Prediction(
-        match_id=match_id,
-        season=match_info.get("season", 0),
-        match_number=match_info.get("match_number", 0),
-        stage=match_info.get("stage", ""),
-        team_a=match_info.get("team_a", ""),
-        team_b=match_info.get("team_b", ""),
-        team_a_short=match_info.get("team_a_short", ""),
-        team_b_short=match_info.get("team_b_short", ""),
-        venue_name=match_info.get("venue_name", ""),
-        venue_city=match_info.get("venue_city", ""),
-        match_date=match_info.get("date", ""),
-        start_time_ist=match_info.get("start_time_ist", ""),
-        predicted_winner=prediction_report.get("winner") or "",
-        predicted_winner_short=prediction_report.get("winner_short") or "",
-        confidence_pct=_conf_int,
-        confidence_level=prediction_report.get("confidence_level") or "",
-        json_data=content.decode('utf-8'),
-        uploaded_by=current_admin.username
-    )
+    if existing:
+        # Update existing record (Fix typo/update prediction without creating duplicates)
+        existing.season = match_info.get("season", 0)
+        existing.match_number = match_info.get("match_number", 0)
+        existing.stage = match_info.get("stage", "")
+        existing.team_a = match_info.get("team_a", "")
+        existing.team_b = match_info.get("team_b", "")
+        existing.team_a_short = match_info.get("team_a_short", "")
+        existing.team_b_short = match_info.get("team_b_short", "")
+        existing.venue_name = match_info.get("venue_name", "")
+        existing.venue_city = match_info.get("venue_city", "")
+        existing.match_date = match_info.get("date", "")
+        existing.start_time_ist = match_info.get("start_time_ist", "")
+        existing.predicted_winner = prediction_report.get("winner") or ""
+        existing.predicted_winner_short = prediction_report.get("winner_short") or ""
+        existing.confidence_pct = _conf_int
+        existing.confidence_level = prediction_report.get("confidence_level") or ""
+        existing.json_data = content.decode('utf-8')
+        existing.uploaded_by = current_admin.username
+        
+        session.add(existing)
+        session.commit()
+        session.refresh(existing)
+        return {"message": "Match updated successfully", "id": existing.id}
+    else:
+        prediction = Prediction(
+            match_id=match_id,
+            season=match_info.get("season", 0),
+            match_number=match_info.get("match_number", 0),
+            stage=match_info.get("stage", ""),
+            team_a=match_info.get("team_a", ""),
+            team_b=match_info.get("team_b", ""),
+            team_a_short=match_info.get("team_a_short", ""),
+            team_b_short=match_info.get("team_b_short", ""),
+            venue_name=match_info.get("venue_name", ""),
+            venue_city=match_info.get("venue_city", ""),
+            match_date=match_info.get("date", ""),
+            start_time_ist=match_info.get("start_time_ist", ""),
+            predicted_winner=prediction_report.get("winner") or "",
+            predicted_winner_short=prediction_report.get("winner_short") or "",
+            confidence_pct=_conf_int,
+            confidence_level=prediction_report.get("confidence_level") or "",
+            json_data=content.decode('utf-8'),
+            uploaded_by=current_admin.username
+        )
 
-    session.add(prediction)
-    session.commit()
-    session.refresh(prediction)
+        session.add(prediction)
+        session.commit()
+        session.refresh(prediction)
 
-    return {"message": "Upload successful", "id": prediction.id}
+        return {"message": "Upload successful", "id": prediction.id}

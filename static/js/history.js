@@ -90,7 +90,7 @@ function renderTable() {
             <tr>
                 <td class="font-bold">${formatMatchLabel(m)}</td>
                 <td class="text-muted font-sm">${m.match_date}</td>
-                <td><span class="text-pbks font-bold">${m.team_a_short}</span> vs <span class="text-gt font-bold">${m.team_b_short}</span></td>
+                <td><span class="font-bold" style="color:var(--team-a-color)">${m.team_a_short}</span> vs <span class="font-bold" style="color:var(--team-b-color)">${m.team_b_short}</span></td>
                 ${predCell}
                 ${confCell}
                 <td>${resultHtml}</td>
